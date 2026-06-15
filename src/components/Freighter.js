@@ -1,34 +1,98 @@
-import {signTransaction, setAllowed, getAddress} from '@stellar/freighter-api';
+import { StellarWalletsKit, Networks } from '@creit.tech/stellar-wallets-kit';
+import { defaultModules } from '@creit.tech/stellar-wallets-kit/modules/utils';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
 const server = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
 
-const checkConnection = async () => {
-  return await setAllowed();
+// Initialize StellarWalletsKit with default modules (supporting Freighter, Albedo, Hana, Lobstr, xBull, etc.)
+StellarWalletsKit.init({
+  network: Networks.TESTNET,
+  modules: defaultModules(),
+});
+
+const kit = StellarWalletsKit;
+
+/**
+ * Open the StellarWalletsKit modal to connect a wallet.
+ * Returns the public key address.
+ */
+const connectWallet = async () => {
+  try {
+    const { address } = await StellarWalletsKit.authModal();
+    return address;
+  } catch (e) {
+    console.error('Wallet connection failed:', e);
+    
+    // Normalize and throw structured errors
+    const errMsg = e?.message || String(e);
+    if (errMsg.includes('closed') || errMsg.includes('dismissed')) {
+      const err = new Error('Wallet connection cancelled by the user.');
+      err.code = 'USER_REJECTED';
+      throw err;
+    }
+    
+    if (errMsg.includes('not found') || errMsg.includes('install')) {
+      const err = new Error('Selected wallet not found. Please install the wallet extension to continue.');
+      err.code = 'WALLET_NOT_FOUND';
+      throw err;
+    }
+
+    throw e;
+  }
 };
 
-const retrievePublicKey = async () => {
-  const { address } = await getAddress();
-  return address;
+/**
+ * Disconnect the current wallet session.
+ */
+const disconnectWallet = async () => {
+  try {
+    await StellarWalletsKit.disconnect();
+  } catch (e) {
+    console.warn('Disconnect error:', e);
+  }
 };
 
-const getBalance = async () => {
-  await setAllowed();
-
-  const { address } = await getAddress();
-  const account = await server.loadAccount(address);
-  const xlm = account.balances.find((b) => b.asset_type === 'native');
-
-  return xlm?.balance || '0';
+/**
+ * Retrieve the balance of the connected account.
+ */
+const getBalance = async (address) => {
+  if (!address) return '0';
+  try {
+    const account = await server.loadAccount(address);
+    const xlm = account.balances.find((b) => b.asset_type === 'native');
+    return xlm?.balance || '0';
+  } catch (e) {
+    console.error('Failed to load account balance:', e);
+    // If account doesn't exist on testnet yet, return '0'
+    if (e?.response?.status === 404) {
+      return '0';
+    }
+    throw e;
+  }
 };
 
-const sendPayment = async (destination, amount) => {
-  await setAllowed();
+/**
+ * Send an XLM payment using the active wallet in the kit.
+ */
+const sendPayment = async (senderAddress, destination, amount) => {
+  if (!senderAddress) {
+    throw new Error('No wallet connected.');
+  }
 
-  const { address } = await getAddress();
-  const account = await server.loadAccount(address);
+  // Pre-flight check: Load sender account
+  let account;
+  try {
+    account = await server.loadAccount(senderAddress);
+  } catch (e) {
+    if (e?.response?.status === 404) {
+      const err = new Error('Sender account does not exist or has not been funded. Fund your wallet on Testnet using Friendbot first.');
+      err.code = 'INSUFFICIENT_BALANCE';
+      throw err;
+    }
+    throw e;
+  }
 
-  // Preflight: check whether destination account exists on the network
+  // Pre-flight check: Destination account existence
   let destinationExists = true;
   try {
     await server.loadAccount(destination);
@@ -36,13 +100,12 @@ const sendPayment = async (destination, amount) => {
     destinationExists = false;
   }
 
-  // Compute reserves and available balance to avoid op_low_reserve failures.
-  // Fetch current base_reserve_in_stroops from Horizon (most recent ledger).
+  // Reserve and balance check to prevent op_low_reserve
   const nativeBalEntry = account.balances.find((b) => b.asset_type === 'native');
   const nativeBalance = Number(nativeBalEntry?.balance || 0);
   const subentryCount = account.subentry_count || 0;
 
-  let baseReserve = 0.5; // fallback (XLM)
+  let baseReserve = 0.5; // default fallback (XLM)
   try {
     const ledgerResp = await server.ledgers().order('desc').limit(1).call();
     const baseReserveInStroops = Number(ledgerResp.records?.[0]?.base_reserve_in_stroops || 5000000);
@@ -53,32 +116,27 @@ const sendPayment = async (destination, amount) => {
 
   const minBalance = (2 + subentryCount) * baseReserve;
   const feeXLM = Number(StellarSdk.BASE_FEE || 100) / 1e7;
-  const availableForSend = nativeBalance - minBalance - feeXLM;
+  const sendAmount = Number(amount);
 
-  console.debug('Reserve check:', { nativeBalance, subentryCount, minBalance, feeXLM, baseReserve, destinationExists });
-
-  // For CreateAccount the starting balance must cover at least the minimum reserve for a new account
+  // If destination doesn't exist, we must use CreateAccount. Starting balance must cover new account minimum reserve.
   if (!destinationExists) {
     const minStarting = 2 * baseReserve;
-    if (Number(amount) < minStarting) {
-      const err = new Error(`Starting balance too low for CreateAccount. Minimum: ${minStarting} XLM`);
-      err.horizon = { extras: { result_codes: { transaction: 'tx_failed', operations: ['op_low_reserve'] } } };
+    if (sendAmount < minStarting) {
+      const err = new Error(`Starting balance too low for new account. Minimum required is ${minStarting} XLM.`);
+      err.code = 'INSUFFICIENT_BALANCE';
       throw err;
     }
   }
 
-  // For CreateAccount: sender must have enough to send the starting balance AND maintain own reserve
-  // For Payment: sender must have enough to send amount AND maintain own reserve
-  const sendAmount = Number(amount);
   const requiredSenderBalance = minBalance + feeXLM + sendAmount;
-
   if (nativeBalance < requiredSenderBalance) {
     const needed = requiredSenderBalance - nativeBalance;
-    const err = new Error(`Insufficient balance. Have ${nativeBalance.toFixed(7)} XLM. Need ${requiredSenderBalance.toFixed(7)} XLM (reserve: ${minBalance.toFixed(7)}, fee: ${feeXLM.toFixed(7)}, send: ${sendAmount.toFixed(7)}). Add ${needed.toFixed(7)} XLM to proceed.`);
-    err.horizon = { extras: { result_codes: { transaction: 'tx_failed', operations: ['op_low_reserve'] } } };
+    const err = new Error(`Insufficient balance. Have ${nativeBalance.toFixed(2)} XLM. Need ${requiredSenderBalance.toFixed(2)} XLM (reserve: ${minBalance.toFixed(2)}, fee: ${feeXLM.toFixed(4)}, send: ${sendAmount.toFixed(2)}). You need ${needed.toFixed(2)} more XLM.`);
+    err.code = 'INSUFFICIENT_BALANCE';
     throw err;
   }
 
+  // Build the payment transaction
   const txBuilder = new StellarSdk.TransactionBuilder(account, {
     fee: StellarSdk.BASE_FEE,
     networkPassphrase: StellarSdk.Networks.TESTNET,
@@ -93,7 +151,6 @@ const sendPayment = async (destination, amount) => {
       }),
     );
   } else {
-    // Destination doesn't exist — create it with `CreateAccount` using the provided amount
     txBuilder.addOperation(
       StellarSdk.Operation.createAccount({
         destination,
@@ -105,42 +162,78 @@ const sendPayment = async (destination, amount) => {
   const transaction = txBuilder.setTimeout(30).build();
 
   try {
-    // Freighter returns an object with the signed XDR (commonly `signedTxXdr`)
-    const signed = await signTransaction(transaction.toXDR(), {
-      networkPassphrase: StellarSdk.Networks.TESTNET,
-      accountToSign: address,
+    // Sign transaction using the kit
+    const { signedTxXdr } = await StellarWalletsKit.signTransaction(transaction.toXDR(), {
+      address: senderAddress,
     });
 
-    console.debug('Freighter signed response:', signed);
-
-    // support a few possible response shapes
-    const signedXdr = signed?.signedTxXdr || signed?.signedXdr || signed;
-
     const signedTransaction = StellarSdk.TransactionBuilder.fromXDR(
-      signedXdr,
+      signedTxXdr,
       StellarSdk.Networks.TESTNET,
     );
 
+    // Submit transaction to Horizon
     try {
       return await server.submitTransaction(signedTransaction);
     } catch (submitErr) {
-      // Try to surface Horizon error details when available
-      const details = submitErr?.response?.data || submitErr?.data || submitErr?.message || submitErr;
-      console.error('Horizon submit error:', details, submitErr);
+      console.error('Horizon submit error:', submitErr);
+      const details = submitErr?.response?.data || submitErr;
       const msg = typeof details === 'object' ? JSON.stringify(details) : String(details);
-      const err = new Error(`Horizon submit failed: ${msg}`);
-      // attach parsed horizon details for upstream handling
-      try {
-        err.horizon = typeof details === 'string' ? JSON.parse(details) : details;
-      } catch (parseErr) {
-        err.horizon = details;
-      }
-      throw err;
+      throw new Error(`Horizon transaction submission failed: ${msg}`);
     }
   } catch (err) {
     console.error('sendPayment failed:', err);
+    
+    // Normalize user cancellation / rejection errors
+    const errMsg = err?.message || String(err);
+    if (errMsg.includes('reject') || errMsg.includes('cancel') || errMsg.includes('decline') || errMsg.includes('close')) {
+      const rejectErr = new Error('Transaction signing was rejected by the user.');
+      rejectErr.code = 'USER_REJECTED';
+      throw rejectErr;
+    }
+    
     throw err;
   }
 };
 
-export {checkConnection, retrievePublicKey, getBalance, sendPayment};
+/**
+ * Start a stream of payments for a given address.
+ */
+const startPaymentStream = (address, onMessage, onError) => {
+  if (!address) return () => {};
+
+  const stop = server
+    .payments()
+    .forAccount(address)
+    .cursor('now')
+    .stream({
+      onmessage: (payment) => {
+        try {
+          onMessage && onMessage(payment);
+        } catch (e) {
+          console.error('payment stream onMessage handler failed', e);
+        }
+      },
+      onerror: (err) => {
+        console.error('payment stream error', err);
+        onError && onError(err);
+      },
+    });
+
+  return () => {
+    try {
+      stop();
+    } catch (e) {
+      console.warn('Failed to stop payment stream', e);
+    }
+  };
+};
+
+export {
+  kit,
+  connectWallet,
+  disconnectWallet,
+  getBalance,
+  sendPayment,
+  startPaymentStream,
+};
