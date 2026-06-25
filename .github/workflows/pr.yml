@@ -1,0 +1,37 @@
+name: PR Verification Pipeline
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+
+      - name: Build Smart Contracts
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Run Contract Tests
+        run: cargo test --workspace
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run Frontend Tests
+        run: npm run test

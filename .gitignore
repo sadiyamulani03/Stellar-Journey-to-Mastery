@@ -24,3 +24,8 @@ yarn-error.log*
 
 # Rust/Cargo build directories
 **/target/
+
+# Next.js
+.next/
+out/
+

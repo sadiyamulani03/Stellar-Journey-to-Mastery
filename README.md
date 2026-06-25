@@ -174,3 +174,187 @@ Or fund via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator
 - [Stellar Wallets Kit](https://github.com/creit-tech/stellar-wallets-kit)
 - [Stellar Laboratory](https://laboratory.stellar.org/)
 - [Stellar Expert Explorer](https://stellar.expert/)
+
+# payLoyal: Smart Escrow Payroll & Loyalty Rewards Protocol
+
+payLoyal is a production-grade, decentralized payroll escrow and builder loyalty rewards protocol built on the Stellar network using Soroban smart contracts. It enables employers to fund payroll streams inside an autonomous escrow environment, secure milestone delivery, and programmatically distribute payments to contractors while automatically minting loyalty point tokens to reward contribution volume.
+
+---
+
+## Architecture Diagram
+
+The following Mermaid diagram shows the overall system flow from the client application through the wallet manager, contract coordinator, and blockchain ledger.
+
+```mermaid
+graph TD
+    User([Employer / Contractor]) -->|Wallet Connection| Front[Next.js 15 Frontend]
+    Front -->|Zustand State| Store[useWalletStore / useTxStore]
+    Front -->|Blockchain Calls| Service[stellar.ts Service Layer]
+    Service -->|StellarWalletsKit| Wallet[Freighter / Albedo / xBull]
+    Wallet -->|Sign & Submit| SorobanRPC[Stellar Soroban RPC Server]
+    SorobanRPC -->|Ledger State Change| EscrowContract[PaymentLogger Escrow Contract]
+    EscrowContract -->|Transfer Funds| TokenContract[Stellar Asset Token Contract]
+    EscrowContract -->|Inter-Contract Call| LoyaltyContract[LoyaltyToken Registry Contract]
+    LoyaltyContract -->|Reward Points| UserPoints[(Contractor Points Store)]
+```
+
+---
+
+## Smart Contract Design
+
+The protocol is split into two co-dependent Soroban smart contracts to enforce clear separation of concerns, secure funds custody, and modular governance:
+
+1. **Escrow Payroll Contract (`payment-logger`)**:
+   - Manages agreement state transitions: `Created (0)` &rarr; `Funded / Active (1)` &rarr; `Completed (2)` / `Cancelled (3)`.
+   - Safely locks employer-deposited tokens in the contract address and releases them to the contractor upon employer signature validation.
+   - Triggers cross-contract executions to award loyalty tokens.
+   - Features contract upgrade capabilities controlled strictly by the administrative role.
+
+2. **Loyalty Token Registry (`loyalty-token`)**:
+   - Maintains account-level loyalty points balance mappings in instance storage with automatic TTL extension.
+   - Restricts adding points to authenticated, authorized contract addresses (like `payment-logger`) and administrative accounts.
+   - Provides point burn/redemption mechanics signed by the point owner.
+   - Features contract upgrade capabilities.
+
+---
+
+## Inter-Contract Communication Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Employer
+    participant Escrow as PaymentLogger Contract
+    participant Token as Stellar Asset Contract
+    participant Loyalty as LoyaltyToken Contract
+    actor Contractor
+
+    Employer->>Escrow: create_agreement(employer, contractor, token, amount, title)
+    Employer->>Escrow: fund_agreement(agreement_id)
+    Token->>Escrow: Transfer amount (locked in escrow)
+    Employer->>Escrow: release_payment(agreement_id)
+    Escrow->>Token: Transfer amount to Contractor
+    Escrow->>Loyalty: add_points(caller, user, amount)
+    Note over Loyalty: Verifies caller is authorized issuer
+    Loyalty->>Contractor: Mint points (1 LP per 10 tokens released)
+```
+
+---
+
+## Features
+
+- **Custom Storage Structures**: Uses typed Soroban structures for payroll agreements and key configurations.
+- **Advanced Access Control**: Employs role-based checks, administrative owner overrides, and strict verification logic.
+- **Inter-Contract Routing**: Demonstrates secure contract-to-contract message calls and permission verification.
+- **Transaction State Machine**: Tracks pending, processing, confirmed, and failed transactions locally.
+- **StellarWalletsKit Integration**: Supports Freighter, Albedo, Hana, and Lobstr wallets with network auto-switching capabilities.
+- **Mobile Responsive Design**: Clean dark-mode dashboard usable on desktop, tablet, and mobile browsers.
+
+---
+
+## Tech Stack
+
+- **Smart Contracts**: Rust, Soroban SDK (v26)
+- **Frontend Core**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand
+- **Service Queries**: React Query
+- **Testing**: Vitest, React Testing Library, Soroban Mock SDK
+
+---
+
+## Local Development
+
+### 1. Smart Contract Setup & Tests
+
+To run smart contract tests locally:
+```bash
+# Run tests for all workspace contracts
+cargo test --workspace
+```
+
+### 2. Frontend Setup
+
+Ensure you have Node.js 18+ installed. Install dependencies and start the local development server:
+```bash
+# Install packages
+npm install --ignore-scripts
+
+# Start Next.js development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org
+NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org
+NEXT_PUBLIC_ESCROW_CONTRACT_ID=CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ
+NEXT_PUBLIC_LOYALTY_CONTRACT_ID=CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F
+```
+
+---
+
+## Testing
+
+To run the frontend test suite:
+```bash
+# Run Vitest test suite
+npm run test
+```
+
+---
+
+## CI/CD Pipeline
+
+The pipeline uses GitHub Actions to verify pull requests and automate deployments.
+
+1. **Pull Request Workflow (`pr.yml`)**:
+   - Checks out repository
+   - Installs Rust and builds WASM contracts
+   - Executes Cargo contract tests
+   - Installs Next.js dependencies and runs Vitest unit tests
+
+2. **Deployment Workflow (`deploy.yml`)**:
+   - Triggered on merges to the `main` branch
+   - Compiles and tests smart contracts
+   - Builds Next.js production bundles and uploads to server environments
+
+---
+
+## Security Considerations
+
+- **Input Sanitization**: Client forms validate addresses and positive decimals before transaction construction.
+- **Authentication Safeguards**: All state-modifying smart contract calls require explicit `require_auth` checks on the employer signature.
+- **Authorized Issuers Only**: The `loyalty-token` contract only mints points when invoked by approved addresses present in contract storage, preventing malicious point inflation.
+- **Contract Code Upgradability**: Code updates are governed strictly by the admin key utilizing secure WASM hash upgrades.
+
+---
+
+## Contract Addresses
+
+- **Escrow Payroll Contract ID**: `CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ`
+- **Loyalty Registry Contract ID**: `CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F`
+
+---
+
+## Transaction Hash
+
+- **Sample initialization transaction hash**: `5df7e47265bf87e974acdae98d7ceb9706e2a222378a5e4d29388dfba4a8f9cd`
+
+---
+
+## Demo Video
+
+- **Demo Video Link**: [payLoyal Demo Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+
+---
+
+## Live Demo
+
+- **Live Demo Link**: [payloyal.stellar-connect-wallet.dapp](https://payloyal-dapp.vercel.app)
