@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(deprecated)]
 use soroban_sdk::{contract, contracttype, contractimpl, token, Env, Address, String, Symbol, symbol_short, BytesN};
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
