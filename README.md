@@ -361,6 +361,7 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 <img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/e22ce1bf-bab8-418e-add0-cb530bc5f5e0" />
 
 #### CI/CD pipeline running:
+<img width="1263" height="778" alt="image" src="https://github.com/user-attachments/assets/d417eeb0-a2bd-4eee-8300-39ee4a790867" />
 
 #### Test output with 3+ passing tests:
 <img width="1476" height="482" alt="image" src="https://github.com/user-attachments/assets/d065f3e7-587b-4cfd-b6ab-7c5f62de00bb" />
