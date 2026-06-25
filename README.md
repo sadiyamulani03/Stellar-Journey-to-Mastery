@@ -152,6 +152,12 @@ https://friendbot.stellar.org/?addr=YOUR_PUBLIC_KEY
 
 Or fund via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator?network=test).
 
+### 📸 Screenshots
+
+#### wallet options available:
+<img width="1811" height="875" alt="image" src="https://github.com/user-attachments/assets/bce49da3-6d32-456f-898a-7e7296c41565" />
+
+---
 ### ✅ Level 2 Checklist
 
 - [x] Public GitHub repository
@@ -349,12 +355,24 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 
 ---
 
-## Demo Video
+### 📸 Screenshots
 
-- **Demo Video Link**: [payLoyal Demo Link](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+#### Mobile responsive UI:
+<img width="610" height="1356" alt="image" src="https://github.com/user-attachments/assets/e22ce1bf-bab8-418e-add0-cb530bc5f5e0" />
+
+#### CI/CD pipeline running:
+
+#### Test output with 3+ passing tests:
+<img width="1476" height="482" alt="image" src="https://github.com/user-attachments/assets/d065f3e7-587b-4cfd-b6ab-7c5f62de00bb" />
 
 ---
 
-## Live Demo
+## Demo Video
 
-- **Live Demo Link**: [payloyal.stellar-connect-wallet.dapp](https://payloyal-dapp.vercel.app)
+- **Demo Video Link**: https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
+
+---
+
+## Live
+
+- **Live Link**: https://stellar-journey-to-mastery-1kzbuwjcw-sadiyamulani03s-projects.vercel.app/
