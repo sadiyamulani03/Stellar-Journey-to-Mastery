@@ -27,6 +27,7 @@ interface WalletState {
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
+  kit: any;
   connectWallet: () => Promise<string | null>;
   disconnectWallet: () => Promise<void>;
   setNetwork: (network: string) => void;
@@ -40,6 +41,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   isConnected: false,
   isConnecting: false,
   error: null,
+  kit: typeof window !== 'undefined' ? StellarWalletsKit : null,
 
   connectWallet: async () => {
     if (typeof window === 'undefined' || !StellarWalletsKit) {

@@ -7,6 +7,7 @@ vi.mock('@creit.tech/stellar-wallets-kit', () => {
       init: vi.fn(),
       authModal: vi.fn(),
       disconnect: vi.fn(),
+      signTransaction: vi.fn(),
     },
     Networks: {
       TESTNET: 'TESTNET',
