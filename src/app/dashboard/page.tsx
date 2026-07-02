@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useWallet } from '../../hooks/useWallet';
+import { useAuth } from '../../hooks/useAuth';
 import { useStreams } from '../../hooks/useStreams';
 import { useLoyalty } from '../../hooks/useLoyalty';
 import { useTxStore } from '../../store/useTxStore';
@@ -28,7 +31,9 @@ import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
 
 export default function Dashboard() {
+  const router = useRouter();
   const { address, isConnected, connectWallet } = useWallet();
+  const { isAuthenticated } = useAuth();
   const { 
     streams, 
     isLoading, 
@@ -92,6 +97,12 @@ export default function Dashboard() {
       totalPausedDuration: 0,
     }
   ];
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/auth');
+    }
+  }, [isAuthenticated, router]);
 
   // Set up ticker to update streaming calculations every second
   useEffect(() => {
@@ -222,10 +233,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 max-w-6xl mx-auto">
       {/* Wallet Not Connected Alert */}
       {!isConnected && (
-        <div className="bg-card/40 border border-accent/20 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto bg-card/40 border border-accent/20 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-xl" />
           <div className="space-y-2 max-w-xl text-center sm:text-left">
             <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 justify-center sm:justify-start">
@@ -247,8 +258,8 @@ export default function Dashboard() {
       )}
 
       {/* Overview stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-card border border-border p-6 rounded-2xl relative overflow-hidden group">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+        <div className="bg-card border border-border p-8 rounded-[2rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
           <span className="text-xs text-muted-foreground uppercase font-semibold">Active Streams</span>
           <div className="text-2xl font-extrabold text-white mt-2">
@@ -256,7 +267,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-2xl relative overflow-hidden group">
+        <div className="bg-card border border-border p-7 rounded-[2rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl group-hover:bg-accent/10 transition-colors" />
           <span className="text-xs text-muted-foreground uppercase font-semibold">My Loyalty Points</span>
           <div className="text-2xl font-extrabold text-white mt-2 flex items-center gap-1.5">
@@ -265,7 +276,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-2xl relative overflow-hidden group">
+        <div className="bg-card border border-border p-7 rounded-[2rem] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-colors" />
           <span className="text-xs text-muted-foreground uppercase font-semibold">Stellar Cash Ramps</span>
           <div className="mt-2 flex gap-3">
@@ -287,7 +298,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
+      <div className="bg-card border border-border rounded-[2rem] p-8">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Live Product Analytics</p>
@@ -298,9 +309,9 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground">tracked events</p>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(analyticsSnapshot.events).slice(0, 4).map(([event, count]) => (
-            <div key={event} className="rounded-xl border border-border bg-zinc-950/70 p-3">
+            <div key={event} className="rounded-3xl border border-border bg-zinc-950/70 p-4">
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{event.replace(/_/g, ' ')}</p>
               <p className="mt-1 text-lg font-semibold text-white">{count}</p>
             </div>
@@ -308,12 +319,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left Side: Create Stream Form */}
-        <div className="lg:col-span-1 bg-card border border-border p-6 rounded-2xl h-fit space-y-6">
+        <div className="lg:col-span-1 bg-card border border-border p-7 rounded-[2rem] h-fit space-y-6">
           <div className="space-y-1">
             <h3 className="text-lg font-bold text-white flex items-center gap-1.5">
               <Plus className="h-5 w-5 text-accent" />
@@ -418,7 +426,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Side: Active Streams Feed */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Clock className="h-5 w-5 text-accent" />
             Wage Streams
@@ -437,7 +445,7 @@ export default function Dashboard() {
               return (
                 <div 
                   key={stream.id} 
-                  className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden group hover:border-zinc-800 transition-colors"
+                  className="bg-card border border-border rounded-[2rem] p-7 relative overflow-hidden group hover:border-zinc-800 transition-colors"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
                   

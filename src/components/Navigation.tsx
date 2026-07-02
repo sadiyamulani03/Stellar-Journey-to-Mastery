@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '../hooks/useWallet';
+import { useAuth } from '../hooks/useAuth';
 import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
   const { address, balance, network, isConnected, isConnecting, connectWallet, disconnectWallet } = useWallet();
+  const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -27,20 +29,20 @@ export default function Navigation() {
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14">
           {/* Logo and Brand */}
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2 font-display font-bold text-xl text-white tracking-wide">
-              <Award className="h-6 w-6 text-accent animate-pulse" />
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 font-display font-semibold text-lg text-white tracking-tight">
+              <Award className="h-5 w-5 text-accent animate-pulse" />
               <span>pay<span className="text-accent">Loyal</span></span>
             </Link>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-accent/10 text-accent border border-accent/20">
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent/10 text-accent border border-accent/20">
               {network}
             </span>
           </div>
 
           {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-5">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const active = pathname === link.href;
@@ -49,7 +51,7 @@ export default function Navigation() {
                   key={link.name}
                   href={link.href}
                   className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-white ${
-                    active ? 'text-accent border-b-2 border-accent py-5 -mb-[2px]' : 'text-muted-foreground py-5'
+                    active ? 'text-accent border-b-2 border-accent pb-1' : 'text-muted-foreground pb-1'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -60,30 +62,38 @@ export default function Navigation() {
           </div>
 
           {/* Connect Button / Wallet Info */}
-          <div className="hidden md:flex items-center gap-4">
-            {isConnected && address ? (
-              <div className="flex items-center gap-2">
-                <div className="bg-zinc-900 border border-border px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Balance:</span>
-                  <span className="font-semibold text-white">{balance} XLM</span>
-                </div>
+          <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              {isAuthenticated ? (
                 <button
-                  onClick={disconnectWallet}
-                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                  onClick={logout}
+                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
                 >
-                  Disconnect ({formatAddress(address)})
+                  Logout
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={connectWallet}
-                disabled={isConnecting}
-                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-lg shadow-primary/20 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-50"
-              >
-                <Wallet className="h-4 w-4" />
-                <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
-              </button>
-            )}
+              ) : (
+                <Link
+                  href="/auth"
+                  className="bg-accent/15 hover:bg-accent/20 text-accent border border-accent/20 px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all"
+                >
+                  Login / Register
+                </Link>
+              )}
+
+              {isConnected && address && (
+                <div className="flex items-center gap-2">
+                  <div className="bg-zinc-900 border border-border px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">{balance} XLM</span>
+                  </div>
+                  <button
+                    onClick={disconnectWallet}
+                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-xl text-sm font-medium transition-all"
+                  >
+                    {formatAddress(address)}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -111,12 +121,31 @@ export default function Navigation() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-card py-4 px-4 space-y-3">
-          {isConnected && address && (
-            <div className="bg-zinc-900 border border-border p-3 rounded-lg flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Wallet: {formatAddress(address)}</span>
-              <span className="font-semibold text-accent">{balance} XLM</span>
-            </div>
-          )}
+          <div className="space-y-3">
+            {isAuthenticated ? (
+              <button
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-2 rounded-xl text-sm font-semibold transition-all"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/auth"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full block bg-accent/15 hover:bg-accent/20 text-accent border border-accent/20 px-3 py-2 rounded-xl text-sm font-semibold text-center transition-all"
+              >
+                Login / Register
+              </Link>
+            )}
+
+            {isConnected && address && (
+              <div className="bg-zinc-900 border border-border p-3 rounded-lg flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Wallet: {formatAddress(address)}</span>
+                <span className="font-semibold text-accent">{balance} XLM</span>
+              </div>
+            )}
+          </div>
           <div className="space-y-1">
             {navLinks.map((link) => {
               const Icon = link.icon;

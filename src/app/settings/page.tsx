@@ -9,10 +9,10 @@ export default function SettingsPage() {
   const { address, network, isConnected, setNetwork, connectWallet, disconnectWallet } = useWallet();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-12">
       {/* Page Title */}
-      <div className="space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-white flex items-center gap-2">
+      <div className="space-y-2">
+        <h1 className="text-3xl sm:text-4xl font-display font-bold text-white flex items-center gap-3">
           <SettingsIcon className="h-6 w-6 text-accent" />
           Application Settings
         </h1>
@@ -23,9 +23,10 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Left side: categories */}
-        <div className="md:col-span-1 space-y-2">
-          <div className="bg-card border border-border rounded-xl p-4 space-y-1">
-            <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-accent flex items-center gap-2">
+        <div className="md:col-span-1 space-y-3">
+          <div className="bg-card border border-border rounded-[2rem] p-8 space-y-4">
+            <div className="text-sm uppercase tracking-[0.15em] text-muted-foreground font-semibold">Configuration</div>
+            <button className="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold bg-accent/10 text-accent flex items-center gap-3">
               <Cpu className="h-4 w-4" />
               <span>Protocol Config</span>
             </button>
@@ -36,8 +37,8 @@ export default function SettingsPage() {
         <div className="md:col-span-2 space-y-6">
           
           {/* Wallet Profile */}
-          <div className="bg-card border border-border p-6 rounded-2xl space-y-4">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
+          <div className="bg-card border border-border p-8 rounded-[2rem] space-y-5">
+            <h3 className="font-bold text-white text-lg flex items-center gap-2">
               <Wallet className="h-5 w-5 text-accent" />
               Wallet Configuration
             </h3>
@@ -75,8 +76,8 @@ export default function SettingsPage() {
           </div>
 
           {/* Network Selection */}
-          <div className="bg-card border border-border p-6 rounded-2xl space-y-4">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
+          <div className="bg-card border border-border p-8 rounded-[2rem] space-y-5">
+            <h3 className="font-bold text-white text-lg flex items-center gap-2">
               <Server className="h-5 w-5 text-accent" />
               Stellar Network Node
             </h3>
@@ -124,8 +125,8 @@ export default function SettingsPage() {
           </div>
 
           {/* Deployed Contract Registry */}
-          <div className="bg-card border border-border p-6 rounded-2xl space-y-4">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
+          <div className="bg-card border border-border p-8 rounded-[2rem] space-y-5">
+            <h3 className="font-bold text-white text-lg flex items-center gap-2">
               <Shield className="h-5 w-5 text-accent" />
               Smart Contract Addresses
             </h3>

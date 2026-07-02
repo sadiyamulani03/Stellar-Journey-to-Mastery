@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import React from "react";
 import Providers from "./providers";
-import Navigation from "../components/Navigation";
+import AuthNavigation from "../components/AuthNavigation";
+import AuthGuard from "../components/AuthGuard";
 import ToastContainer from "../components/ToastContainer";
 import GlobalInit from "../components/GlobalInit";
 
@@ -23,11 +24,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans antialiased overflow-x-hidden">
+      <body className="bg-black text-white min-h-screen flex flex-col font-sans antialiased overflow-x-hidden">
         <Providers>
           <GlobalInit />
-          <Navigation />
-          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AuthGuard />
+          <AuthNavigation />
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             {children}
           </main>
           <ToastContainer />

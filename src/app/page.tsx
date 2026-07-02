@@ -1,17 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useWallet } from '../hooks/useWallet';
+import { useAuth } from '../hooks/useAuth';
 import { ArrowRight, ShieldCheck, Zap, Coins, CheckCircle, RefreshCw } from 'lucide-react';
 
 export default function LandingPage() {
+  const router = useRouter();
   const { isConnected, connectWallet } = useWallet();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/auth');
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="space-y-20 py-10">
-      {/* Hero Section */}
-      <div className="relative text-center space-y-6 max-w-4xl mx-auto py-12">
+    <div className="space-y-24 py-14">
+      <div className="relative text-center space-y-6 max-w-3xl mx-auto py-14">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.15),transparent)] blur-3xl" />
         
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent/15 text-accent border border-accent/20">
@@ -57,7 +70,7 @@ export default function LandingPage() {
       </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {[
           { label: 'Total Volume Secured', value: '$12,492,084', desc: 'Secure smart contract deposits' },
           { label: 'Loyalty Points Distributed', value: '452,198 LP', desc: 'Points awarded to contractors' },
