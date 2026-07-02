@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 import { ShieldCheck, ArrowRightCircle, Lock, User } from 'lucide-react';
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, isLoading, error, isAuthenticated } = useAuth();
@@ -168,5 +168,19 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-black px-4 py-10 text-sm text-muted-foreground">
+          Loading authentication...
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }
