@@ -180,6 +180,7 @@ Or fund via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator
 - [Stellar Wallets Kit](https://github.com/creit-tech/stellar-wallets-kit)
 - [Stellar Laboratory](https://laboratory.stellar.org/)
 - [Stellar Expert Explorer](https://stellar.expert/)
+---
 
 ## 🟡 Level 3 — Orange Belt: payLoyal: Smart Escrow Payroll & Loyalty Rewards Protocol
 
@@ -347,6 +348,11 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 - **Escrow Payroll Contract ID**: `CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ`
 - **Loyalty Registry Contract ID**: `CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F`
 
+### Deployment Verification
+
+- Verified against the Stellar Testnet Soroban RPC: the escrow contract address above responded successfully to a live simulation call.
+- The loyalty and resolver defaults currently shown in the app should be replaced with valid deployed contract IDs if you want full multi-contract verification.
+
 ---
 
 ## Transaction Hash
@@ -377,6 +383,8 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 ## Live
 
 - **Live Link**: https://stellar-journey-to-mastery-1kzbuwjcw-sadiyamulani03s-projects.vercel.app/
+
+---
 
 ## 🟢 Level 4 — Green Belt: payLoyal V2 
 
@@ -550,29 +558,21 @@ The frontend service layer already provides default contract IDs for the current
 
 ---
 
-## 📸 Screenshots
-
-The project should include:
-- Product UI screenshot
+## 📸 Screenshots:
+- Product UI screenshot:-
 - Mobile responsive view
 - Analytics or monitoring view
 - Demo transaction or activity feed screenshot
 
 ---
 
-## 🎥 Demo Video
-
-Add a short walkthrough video showing:
-1. Wallet connection
-2. Stream creation and funding
-3. Withdraw and dispute flow
-4. Activity feed and transaction state updates
+## 🎥 Demo Video:
 
 ---
 
-## 🔗 Live Demo
+## 🔗 Live Demo:
 
-Add the deployed demo URL here before submission.
+
 
 ---
 
