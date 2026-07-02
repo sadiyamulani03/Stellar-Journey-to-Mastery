@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { parseJsonResponse } from '../lib/api';
 import { trackProductEvent } from '../lib/monitoring';
 
 // Defer StellarWalletsKit loading to client-side only to support Next.js server-side pre-rendering
@@ -110,7 +111,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         set({ balance: '0.00' });
         return;
       }
-      const data = await res.json();
+      const data = await parseJsonResponse(res, { balances: [] });
       const nativeBal = data.balances.find((b: any) => b.asset_type === 'native');
       set({ balance: parseFloat(nativeBal?.balance || '0').toFixed(2) });
     } catch (err) {
