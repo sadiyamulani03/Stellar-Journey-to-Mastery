@@ -560,9 +560,13 @@ The frontend service layer already provides default contract IDs for the current
 
 ## 📸 Screenshots:
 - Product UI screenshot:-
-- Mobile responsive view
-- Analytics or monitoring view
-- Demo transaction or activity feed screenshot
+  <img width="1890" height="873" alt="image" src="https://github.com/user-attachments/assets/6c9fab14-d9a1-4c68-96b5-9e55c4966c13" />
+
+- Mobile responsive view:-
+  
+  <img width="610" height="1356" alt="mr" src="https://github.com/user-attachments/assets/c03b33b4-21cf-421a-917f-6f952526d375" />
+
+- Analytics or monitoring view:-
 
 ---
 
@@ -570,31 +574,7 @@ The frontend service layer already provides default contract IDs for the current
 
 ---
 
-## 🔗 Live Demo:
-
-
-
----
-
-## ✅ Submission Checklist
-
-Ensure the project meets all requested submission requirements before sharing it.
-
-### Required
-
-- Public GitHub repository
-- Complete documentation in the repository
-- Minimum 15+ meaningful commits
-- Live demo link
-- Contract deployment address
-- Screenshots showing:
-  - Product UI
-  - Mobile responsive design
-  - Analytics or monitoring setup
-- Demo video link
-- Proof of 10+ user wallet interactions
-- Basic user feedback summary
-
+## 🔗 Live Demo: https://stellar-journey-to-mastery.vercel.app/
 ---
 
 ## 🙏 Acknowledgements
