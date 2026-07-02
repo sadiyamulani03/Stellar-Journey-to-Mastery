@@ -3,9 +3,16 @@ import { getUserByUsername } from '@/lib/db';
 import { verifyPassword, signToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const username = String(body.username || '').trim();
-  const password = String(body.password || '');
+  let body: any;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
+  }
+
+  const username = String(body?.username || '').trim();
+  const password = String(body?.password || '');
 
   if (!username || !password) {
     return NextResponse.json({ error: 'Username and password are required.' }, { status: 400 });
