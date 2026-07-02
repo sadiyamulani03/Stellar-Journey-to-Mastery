@@ -57,7 +57,7 @@ export default function Dashboard() {
   const [amount, setAmount] = useState('');
   const [duration, setDuration] = useState('86400'); // Default: 1 Day
   const [customDuration, setCustomDuration] = useState('');
-  const [tokenAddress, setTokenAddress] = useState('CDLZFC3SYJYDZT7K67VZ75HPJGWAM3BT2H2MWMCD42Y4AYQXSWGWHPQ2'); // default Testnet token or XLM
+  const [tokenAddress, setTokenAddress] = useState('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'); // default Testnet token or XLM
 
   // Cash Ramp State
   const [rampModalOpen, setRampModalOpen] = useState(false);
