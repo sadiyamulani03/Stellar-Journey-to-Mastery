@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { parseJsonResponse } from '../lib/api';
+import { getApiErrorMessage, parseJsonResponse } from '../lib/api';
 
 export interface UserProfile {
   id: string;
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const payload = await parseJsonResponse(response, { error: 'Login failed.' });
       if (!response.ok) {
-        set({ error: payload?.error || 'Login failed.', isLoading: false });
+        set({ error: getApiErrorMessage(payload, response, 'Login failed.'), isLoading: false });
         return false;
       }
 
@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const payload = await parseJsonResponse(response, { error: 'Registration failed.' });
       if (!response.ok) {
-        set({ error: payload?.error || 'Registration failed.', isLoading: false });
+        set({ error: getApiErrorMessage(payload, response, 'Registration failed.'), isLoading: false });
         return false;
       }
 

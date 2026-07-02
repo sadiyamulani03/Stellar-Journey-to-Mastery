@@ -19,11 +19,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Username and password are required.' }, { status: 400 });
   }
 
-  if (getUserByUsername(username)) {
-    return NextResponse.json({ error: 'Username already exists.' }, { status: 409 });
-  }
-
   try {
+    if (getUserByUsername(username)) {
+      return NextResponse.json({ error: 'Username already exists.' }, { status: 409 });
+    }
+
     const passwordHash = await hashPassword(password);
     const user = createUser(username, passwordHash, walletAddress);
     const token = signToken(user.id);
@@ -36,6 +36,6 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Registration failed.' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Registration failed.' }, { status: 500 });
   }
 }
