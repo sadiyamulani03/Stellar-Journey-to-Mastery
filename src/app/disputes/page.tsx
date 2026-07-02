@@ -43,7 +43,7 @@ export default function DisputeHub() {
     {
       id: 1,
       streamId: 991,
-      employer: 'GB_EMPLOYER_DEMO_ADDRESS',
+      employer: 'GBH6XRNQXMMXXCZKZKJFPNBQXFFQ2AZONNFEE4XUN4YKG2CGW3XB5V24',
       contractor: 'GBA24HODL...',
       amountLocked: 1100,
       status: 0, // Open
@@ -51,7 +51,7 @@ export default function DisputeHub() {
       contractorVotes: 3,
       endTime: Math.floor(Date.now() / 1000) + 120, // Closes in 2 minutes
       feeAmount: 55, // 5% fee
-      escrowContract: 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ',
+      escrowContract: 'CCMQWEWUNR5LVWI6KSBCMILU66ZWCX3LVQDX7QB3OYFAZJZI7CDKLYDO',
     },
     {
       id: 2,
@@ -64,7 +64,7 @@ export default function DisputeHub() {
       contractorVotes: 4,
       endTime: Math.floor(Date.now() / 1000) - 3600, // Closed 1 hour ago
       feeAmount: 25,
-      escrowContract: 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ',
+      escrowContract: 'CCMQWEWUNR5LVWI6KSBCMILU66ZWCX3LVQDX7QB3OYFAZJZI7CDKLYDO',
     }
   ]);
 
