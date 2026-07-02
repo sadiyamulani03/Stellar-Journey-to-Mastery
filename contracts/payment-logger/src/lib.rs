@@ -4,33 +4,58 @@ use soroban_sdk::{contract, contracttype, contractimpl, token, Env, Address, Str
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
 const LOYALTY_ADDR: Symbol = symbol_short!("LOY_ADDR");
-const COUNT_AGREEMENT: Symbol = symbol_short!("COUNT_AGR");
+const RESOLVER_ADDR: Symbol = symbol_short!("RES_ADDR");
+const COUNT_STREAM: Symbol = symbol_short!("COUNT_STR");
+const DISPUTE_FEE_PCT: i128 = 5; // 5% flat dispute fee
+
+#[soroban_sdk::contractclient(name = "PayLoyalResolverClient")]
+pub trait PayLoyalResolverInterface {
+    fn register_dispute(
+        env: Env,
+        escrow_contract: Address,
+        stream_id: u64,
+        employer: Address,
+        contractor: Address,
+        amount_locked: i128,
+        fee_amount: i128,
+        voting_duration: u64,
+    ) -> u64;
+}
 
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
-pub struct Agreement {
+pub struct Stream {
     pub id: u64,
     pub employer: Address,
     pub contractor: Address,
     pub token: Address,
     pub amount: i128,
-    pub status: u32, // 0 = Created, 1 = Funded/Active, 2 = Completed, 3 = Cancelled
+    pub start_time: u64,
+    pub end_time: u64,
+    pub withdrawn_amount: i128,
+    pub status: u32, // 0 = Created, 1 = Active, 2 = Completed, 3 = Paused, 4 = Disputed
     pub title: String,
+    pub last_paused_time: u64,
+    pub total_paused_duration: u64,
 }
 
 #[contracttype]
 pub enum DataKey {
-    Agreement(u64),
+    Stream(u64),
 }
 
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub enum EscrowEvent {
-    AgreementCreated(u64, Address, Address, i128),
-    AgreementFunded(u64, Address, i128),
-    PaymentReleased(u64, Address, i128),
-    AgreementCancelled(u64),
+    StreamCreated(u64, Address, Address, i128, String),
+    StreamFunded(u64, Address, u64, u64),
+    StreamPaused(u64, u64),
+    StreamResumed(u64, u64),
+    WagesWithdrawn(u64, Address, i128),
+    DisputeRaised(u64, u64),
+    StreamResolved(u64, i128, i128), // stream_id, released to contractor, refunded to employer
     LoyaltyConfigured(Address),
+    ResolverConfigured(Address),
     ContractUpgraded(BytesN<32>),
 }
 
@@ -72,138 +97,362 @@ impl PaymentLogger {
         env.storage().instance().get(&LOYALTY_ADDR)
     }
 
-    pub fn create_agreement(
+    pub fn set_dispute_resolver(env: Env, address: Address) {
+        let admin = Self::get_admin(env.clone());
+        admin.require_auth();
+        env.storage().instance().set(&RESOLVER_ADDR, &address);
+        env.storage().instance().extend_ttl(5000, 5000);
+
+        env.events().publish(
+            (symbol_short!("escrow"), symbol_short!("res_set")),
+            EscrowEvent::ResolverConfigured(address),
+        );
+    }
+
+    pub fn get_dispute_resolver(env: Env) -> Option<Address> {
+        env.storage().instance().get(&RESOLVER_ADDR)
+    }
+
+    pub fn create_stream(
         env: Env,
         employer: Address,
         contractor: Address,
         token: Address,
         amount: i128,
+        duration_seconds: u64,
         title: String,
     ) -> u64 {
         employer.require_auth();
         if amount <= 0 {
             panic!("amount must be positive");
         }
+        if duration_seconds <= 0 {
+            panic!("duration must be positive");
+        }
 
-        let mut count: u64 = env.storage().instance().get(&COUNT_AGREEMENT).unwrap_or(0);
+        let mut count: u64 = env.storage().instance().get(&COUNT_STREAM).unwrap_or(0);
         count += 1;
 
-        let agreement = Agreement {
+        let stream = Stream {
             id: count,
             employer: employer.clone(),
-            contractor: contractor.clone(),
+            contractor,
             token,
             amount,
+            start_time: 0,
+            end_time: duration_seconds, // temporarily stores duration before funding
+            withdrawn_amount: 0,
             status: 0, // Created
-            title,
+            title: title.clone(),
+            last_paused_time: 0,
+            total_paused_duration: 0,
         };
 
-        env.storage().instance().set(&DataKey::Agreement(count), &agreement);
-        env.storage().instance().set(&COUNT_AGREEMENT, &count);
+        env.storage().instance().set(&DataKey::Stream(count), &stream);
+        env.storage().instance().set(&COUNT_STREAM, &count);
         env.storage().instance().extend_ttl(5000, 5000);
 
         env.events().publish(
             (symbol_short!("escrow"), symbol_short!("created")),
-            EscrowEvent::AgreementCreated(count, employer, contractor, amount),
+            EscrowEvent::StreamCreated(count, employer, stream.contractor.clone(), amount, title),
         );
 
         count
     }
 
-    pub fn fund_agreement(env: Env, agreement_id: u64) {
-        let mut agreement = Self::fetch_agreement(env.clone(), agreement_id);
-        if agreement.status != 0 {
-            panic!("agreement is not in Created status");
+    pub fn fund_stream(env: Env, stream_id: u64) {
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 0 {
+            panic!("stream is not in Created status");
         }
 
-        agreement.employer.require_auth();
+        stream.employer.require_auth();
 
-        let token_client = token::Client::new(&env, &agreement.token);
+        let token_client = token::Client::new(&env, &stream.token);
         token_client.transfer(
-            &agreement.employer,
+            &stream.employer,
             &env.current_contract_address(),
-            &agreement.amount,
+            &stream.amount,
         );
 
-        agreement.status = 1; // Funded
-        env.storage().instance().set(&DataKey::Agreement(agreement_id), &agreement);
+        let now = env.ledger().timestamp();
+        let duration = stream.end_time; // end_time temporarily held duration
+        stream.start_time = now;
+        stream.end_time = now + duration;
+        stream.status = 1; // Active
+
+        env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
         env.storage().instance().extend_ttl(5000, 5000);
 
         env.events().publish(
             (symbol_short!("escrow"), symbol_short!("funded")),
-            EscrowEvent::AgreementFunded(agreement_id, agreement.employer.clone(), agreement.amount),
+            EscrowEvent::StreamFunded(stream_id, stream.employer.clone(), stream.start_time, stream.end_time),
         );
     }
 
-    pub fn release_payment(env: Env, agreement_id: u64) {
-        let mut agreement = Self::fetch_agreement(env.clone(), agreement_id);
-        if agreement.status != 1 {
-            panic!("agreement is not in Funded status");
+    pub fn pause_stream(env: Env, stream_id: u64) {
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 1 {
+            panic!("stream is not Active");
         }
 
-        agreement.employer.require_auth();
+        stream.employer.require_auth();
 
-        let token_client = token::Client::new(&env, &agreement.token);
-        token_client.transfer(
-            &env.current_contract_address(),
-            &agreement.contractor,
-            &agreement.amount,
-        );
+        let now = env.ledger().timestamp();
+        stream.status = 3; // Paused
+        stream.last_paused_time = now;
 
-        agreement.status = 2; // Completed
-        env.storage().instance().set(&DataKey::Agreement(agreement_id), &agreement);
+        env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
         env.storage().instance().extend_ttl(5000, 5000);
 
         env.events().publish(
-            (symbol_short!("escrow"), symbol_short!("released")),
-            EscrowEvent::PaymentReleased(agreement_id, agreement.contractor.clone(), agreement.amount),
+            (symbol_short!("escrow"), symbol_short!("paused")),
+            EscrowEvent::StreamPaused(stream_id, now),
+        );
+    }
+
+    pub fn resume_stream(env: Env, stream_id: u64) {
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 3 {
+            panic!("stream is not Paused");
+        }
+
+        stream.employer.require_auth();
+
+        let now = env.ledger().timestamp();
+        let pause_diff = now - stream.last_paused_time;
+        stream.total_paused_duration += pause_diff;
+        stream.status = 1; // Active
+
+        env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
+        env.storage().instance().extend_ttl(5000, 5000);
+
+        env.events().publish(
+            (symbol_short!("escrow"), symbol_short!("resumed")),
+            EscrowEvent::StreamResumed(stream_id, now),
+        );
+    }
+
+    pub fn calculate_earned(_env: Env, stream: Stream, current_time: u64) -> i128 {
+        if stream.status == 0 {
+            return 0;
+        }
+        if stream.status == 2 {
+            return stream.amount;
+        }
+
+        let duration = (stream.end_time - stream.start_time) as i128;
+        if duration <= 0 {
+            return stream.amount;
+        }
+
+        let calculation_time = match stream.status {
+            3 => stream.last_paused_time, // frozen at pause time
+            4 => stream.last_paused_time, // frozen at dispute time
+            _ => current_time,
+        };
+
+        let elapsed = if calculation_time <= stream.start_time {
+            0
+        } else {
+            (calculation_time - stream.start_time - stream.total_paused_duration) as i128
+        };
+
+        if elapsed >= duration {
+            stream.amount
+        } else if elapsed <= 0 {
+            0
+        } else {
+            (stream.amount * elapsed) / duration
+        }
+    }
+
+    pub fn calculate_withdrawable(env: Env, stream_id: u64, current_timestamp: u64) -> i128 {
+        let stream = Self::fetch_stream(env.clone(), stream_id);
+        let earned = Self::calculate_earned(env.clone(), stream.clone(), current_timestamp);
+        let withdrawable = earned - stream.withdrawn_amount;
+        if withdrawable <= 0 {
+            0
+        } else {
+            withdrawable
+        }
+    }
+
+    pub fn withdraw_wages(env: Env, stream_id: u64) {
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 1 && stream.status != 3 {
+            panic!("stream is not withdrawable");
+        }
+
+        stream.contractor.require_auth();
+
+        let now = env.ledger().timestamp();
+        let earned = Self::calculate_earned(env.clone(), stream.clone(), now);
+        let withdrawable = earned - stream.withdrawn_amount;
+
+        if withdrawable <= 0 {
+            panic!("no wages earned to withdraw");
+        }
+
+        let token_client = token::Client::new(&env, &stream.token);
+        token_client.transfer(
+            &env.current_contract_address(),
+            &stream.contractor,
+            &withdrawable,
         );
 
+        stream.withdrawn_amount += withdrawable;
+        if stream.withdrawn_amount >= stream.amount {
+            stream.status = 2; // Completed
+        }
+
+        env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
+        env.storage().instance().extend_ttl(5000, 5000);
+
+        env.events().publish(
+            (symbol_short!("escrow"), symbol_short!("withdrew")),
+            EscrowEvent::WagesWithdrawn(stream_id, stream.contractor.clone(), withdrawable),
+        );
+
+        // Add Loyalty Points (1 LP per 10 tokens withdrawn)
         if let Some(loyalty_token_addr) = env.storage().instance().get::<_, Address>(&LOYALTY_ADDR) {
-            let mut reward_points = agreement.amount / 10_000_000;
+            let mut reward_points = withdrawable / 10_000_000;
             if reward_points <= 0 {
                 reward_points = 1;
             }
 
             let loyalty_client = LoyaltyClient::new(&env, &loyalty_token_addr);
-            loyalty_client.add_points(&env.current_contract_address(), &agreement.contractor, &reward_points);
+            loyalty_client.add_points(&env.current_contract_address(), &stream.contractor, &reward_points);
         }
     }
 
-    pub fn cancel_agreement(env: Env, agreement_id: u64) {
-        let mut agreement = Self::fetch_agreement(env.clone(), agreement_id);
-        if agreement.status != 0 && agreement.status != 1 {
-            panic!("agreement cannot be cancelled");
+    pub fn raise_dispute(env: Env, caller: Address, stream_id: u64) {
+        caller.require_auth();
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 1 && stream.status != 3 {
+            panic!("cannot dispute stream in current status");
         }
 
-        agreement.employer.require_auth();
+        if caller != stream.employer && caller != stream.contractor {
+            panic!("caller must be employer or contractor");
+        }
 
-        if agreement.status == 1 {
-            let token_client = token::Client::new(&env, &agreement.token);
+        let now = env.ledger().timestamp();
+        let remaining_locked = stream.amount - stream.withdrawn_amount;
+        if remaining_locked <= 0 {
+            panic!("no funds remain to dispute");
+        }
+
+        let fee_amount = (remaining_locked * DISPUTE_FEE_PCT) / 100;
+        let locked_amount = remaining_locked - fee_amount;
+
+        let was_paused = stream.status == 3;
+        stream.status = 4; // Disputed
+        if !was_paused {
+            stream.last_paused_time = now; // Store dispute timestamp here for calculation consistency
+        }
+        // reserve fee portion from the stream balance
+        stream.withdrawn_amount += fee_amount;
+
+        env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
+        env.storage().instance().extend_ttl(5000, 5000);
+
+        let resolver_address = Self::get_dispute_resolver(env.clone()).expect("resolver not set");
+        let resolver_client = PayLoyalResolverClient::new(&env, &resolver_address);
+        resolver_client.register_dispute(
+            &env.current_contract_address(),
+            &stream_id,
+            &stream.employer,
+            &stream.contractor,
+            &locked_amount,
+            &fee_amount,
+            &86400, // default 24-hour voting window
+        );
+
+        // transfer fee portion to the dispute resolver contract for arbiter reward distribution
+        if fee_amount > 0 {
+            let token_client = token::Client::new(&env, &stream.token);
             token_client.transfer(
                 &env.current_contract_address(),
-                &agreement.employer,
-                &agreement.amount,
+                &resolver_address,
+                &fee_amount,
             );
         }
 
-        agreement.status = 3; // Cancelled
-        env.storage().instance().set(&DataKey::Agreement(agreement_id), &agreement);
-        env.storage().instance().extend_ttl(5000, 5000);
-
         env.events().publish(
-            (symbol_short!("escrow"), symbol_short!("cancelled")),
-            EscrowEvent::AgreementCancelled(agreement_id),
+            (symbol_short!("escrow"), symbol_short!("disputed")),
+            EscrowEvent::DisputeRaised(stream_id, now),
         );
     }
 
-    pub fn fetch_agreement(env: Env, agreement_id: u64) -> Agreement {
-        let key = DataKey::Agreement(agreement_id);
-        env.storage().instance().get(&key).expect("agreement not found")
+    pub fn resolve_stream(env: Env, stream_id: u64, contractor_share_pct: u32) {
+        // Only authorized dispute resolver contract can call this
+        let resolver = env.storage().instance().get::<_, Address>(&RESOLVER_ADDR).expect("resolver not set");
+        resolver.require_auth();
+
+        if contractor_share_pct > 100 {
+            panic!("contractor share percentage cannot exceed 100");
+        }
+
+        let mut stream = Self::fetch_stream(env.clone(), stream_id);
+        if stream.status != 4 {
+            panic!("stream is not under active dispute");
+        }
+
+        // Remaining locked funds in escrow (fee already reserved at dispute time)
+        let remaining_total = stream.amount - stream.withdrawn_amount;
+        if remaining_total > 0 {
+            let contractor_payout = (remaining_total * (contractor_share_pct as i128)) / 100;
+            let employer_refund = remaining_total - contractor_payout;
+
+            let token_client = token::Client::new(&env, &stream.token);
+
+            if contractor_payout > 0 {
+                token_client.transfer(
+                    &env.current_contract_address(),
+                    &stream.contractor,
+                    &contractor_payout,
+                );
+
+                // loyalty points for contractor payout
+                if let Some(loyalty_token_addr) = env.storage().instance().get::<_, Address>(&LOYALTY_ADDR) {
+                    let mut reward_points = contractor_payout / 10_000_000;
+                    if reward_points <= 0 {
+                        reward_points = 1;
+                    }
+                    let loyalty_client = LoyaltyClient::new(&env, &loyalty_token_addr);
+                    loyalty_client.add_points(&env.current_contract_address(), &stream.contractor, &reward_points);
+                }
+            }
+
+            if employer_refund > 0 {
+                token_client.transfer(
+                    &env.current_contract_address(),
+                    &stream.employer,
+                    &employer_refund,
+                );
+            }
+
+            stream.withdrawn_amount = stream.amount; // close out stream balance
+            stream.status = 2; // Completed / Resolved
+            
+            env.storage().instance().set(&DataKey::Stream(stream_id), &stream);
+            env.storage().instance().extend_ttl(5000, 5000);
+
+            env.events().publish(
+                (symbol_short!("escrow"), symbol_short!("resolved")),
+                EscrowEvent::StreamResolved(stream_id, contractor_payout, employer_refund),
+            );
+        }
+    }
+
+    pub fn fetch_stream(env: Env, stream_id: u64) -> Stream {
+        let key = DataKey::Stream(stream_id);
+        env.storage().instance().get(&key).expect("stream not found")
     }
 
     pub fn get_count(env: Env) -> u64 {
-        env.storage().instance().get(&COUNT_AGREEMENT).unwrap_or(0)
+        env.storage().instance().get(&COUNT_STREAM).unwrap_or(0)
     }
 
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
@@ -223,7 +472,7 @@ impl PaymentLogger {
 mod test {
     use super::*;
     use soroban_sdk::{Env, Address, String};
-    use soroban_sdk::testutils::Address as _;
+    use soroban_sdk::testutils::{Address as _, Ledger};
     use soroban_sdk::token;
 
     #[test]
@@ -250,29 +499,51 @@ mod test {
         token_admin_client.mint(&employer, &100_000_000);
         assert_eq!(token_client.balance(&employer), 100_000_000);
 
-        let title = String::from_str(&env, "Monthly Retainer");
-        let agr_id = logger_client.create_agreement(&employer, &contractor, &token_id, &50_000_000, &title);
-        assert_eq!(agr_id, 1);
+        let title = String::from_str(&env, "Developer Stream");
+        // Create stream: 50,000,000 stroops (5 XLM equivalent), duration = 100 seconds
+        let str_id = logger_client.create_stream(&employer, &contractor, &token_id, &50_000_000, &100, &title);
+        assert_eq!(str_id, 1);
 
-        let agr = logger_client.fetch_agreement(&1);
-        assert_eq!(agr.status, 0);
+        let stream = logger_client.fetch_stream(&1);
+        assert_eq!(stream.status, 0); // Created
 
-        logger_client.fund_agreement(&1);
+        // Set ledger timestamp
+        env.ledger().set_timestamp(1000);
+        logger_client.fund_stream(&1);
         assert_eq!(token_client.balance(&employer), 50_000_000);
         assert_eq!(token_client.balance(&logger_id), 50_000_000);
 
-        let agr = logger_client.fetch_agreement(&1);
-        assert_eq!(agr.status, 1);
+        let stream = logger_client.fetch_stream(&1);
+        assert_eq!(stream.status, 1); // Active
+        assert_eq!(stream.start_time, 1000);
+        assert_eq!(stream.end_time, 1100);
 
-        logger_client.release_payment(&1);
-        assert_eq!(token_client.balance(&logger_id), 0);
-        assert_eq!(token_client.balance(&contractor), 50_000_000);
-
-        let agr = logger_client.fetch_agreement(&1);
-        assert_eq!(agr.status, 2);
+        // Advance ledger time by 50 seconds (50% progress)
+        env.ledger().set_timestamp(1050);
+        logger_client.withdraw_wages(&1);
+        assert_eq!(token_client.balance(&contractor), 25_000_000); // 50% earned
+        assert_eq!(token_client.balance(&logger_id), 25_000_000);
 
         let mock_loyalty_client = MockLoyaltyClient::new(&env, &loyalty_id);
-        assert_eq!(mock_loyalty_client.get_points(&contractor), 5);
+        assert_eq!(mock_loyalty_client.get_points(&contractor), 2); // 25,000,000 / 10,000,000 = 2 LP
+
+        // Pause stream at t = 1060
+        env.ledger().set_timestamp(1060);
+        logger_client.pause_stream(&1);
+
+        // Advance time in paused state by 20 seconds. Earliest withdrawable should still be capped at progress at pause (60% total)
+        env.ledger().set_timestamp(1080);
+        let stream = logger_client.fetch_stream(&1);
+        assert_eq!(stream.status, 3); // Paused
+
+        // Resume at t = 1090 (paused for 30 seconds total: 1060 to 1090)
+        env.ledger().set_timestamp(1090);
+        logger_client.resume_stream(&1);
+
+        // Advance to 1120. Elapsed active time = (1120 - 1000) - 30 = 90 seconds. We should have 90% earned.
+        env.ledger().set_timestamp(1120);
+        logger_client.withdraw_wages(&1);
+        assert_eq!(token_client.balance(&contractor), 45_000_000); // 90% total withdrawn (25m + 20m)
     }
 }
 

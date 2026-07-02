@@ -1,9 +1,10 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { buildDeploymentMetadata } = require('./deploy-utils');
 
-const NETWORK = 'testnet';
-const ADMIN_PUBLIC = 'GBH6XRNQXMMXXCZKZKJFPNBQXFFQ2AZONNFEE4XUN4YKG2CGW3XB5V24';
+const NETWORK = process.env.SOROBAN_NETWORK || 'testnet';
+const ADMIN_PUBLIC = process.env.SOROBAN_ADMIN_PUBLIC_KEY || 'GBH6XRNQXMMXXCZKZKJFPNBQXFFQ2AZONNFEE4XUN4YKG2CGW3XB5V24';
 
 console.log('--- payLoyal Smart Contract Deployment Script ---');
 console.log(`Network: ${NETWORK}`);
@@ -19,12 +20,16 @@ async function main() {
     }
 
     console.log('Deploying loyalty-token...');
-    const loyaltyTokenId = 'CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F';
+    const loyaltyTokenId = process.env.SOROBAN_LOYALTY_TOKEN_ID || 'CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F';
     console.log(`loyalty-token deployed successfully. Contract ID: ${loyaltyTokenId}`);
 
     console.log('Deploying payment-logger/escrow...');
-    const paymentLoggerId = 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ';
+    const paymentLoggerId = process.env.SOROBAN_ESCROW_CONTRACT_ID || 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ';
     console.log(`payment-logger deployed successfully. Contract ID: ${paymentLoggerId}`);
+
+    console.log('Deploying payloyal-resolver...');
+    const resolverId = process.env.SOROBAN_RESOLVER_CONTRACT_ID || 'CC3JOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU63RESOLV';
+    console.log(`payloyal-resolver deployed successfully. Contract ID: ${resolverId}`);
 
     console.log('Initializing contracts...');
     console.log(`Initializing loyalty-token with admin: ${ADMIN_PUBLIC}`);
@@ -34,13 +39,15 @@ async function main() {
     console.log(`Authorizing payment-logger (${paymentLoggerId}) as issuer in loyalty-token (${loyaltyTokenId})...`);
     console.log(`Setting loyalty-token (${loyaltyTokenId}) address in payment-logger (${paymentLoggerId})...`);
 
-    const metadata = {
+    const metadata = buildDeploymentMetadata({
       network: NETWORK,
-      admin: ADMIN_PUBLIC,
-      loyaltyTokenId: loyaltyTokenId,
-      paymentLoggerId: paymentLoggerId,
-      timestamp: new Date().toISOString(),
-    };
+      adminPublicKey: ADMIN_PUBLIC,
+      contractIds: {
+        loyaltyTokenId,
+        paymentLoggerId,
+        resolverId,
+      },
+    });
 
     const outPath = path.join(__dirname, '../src/config/contracts.json');
     fs.mkdirSync(path.dirname(outPath), { recursive: true });

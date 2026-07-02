@@ -2,11 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useWalletStore } from '../store/useWalletStore';
+import { useWallet } from '../hooks/useWallet';
 import { ArrowRight, ShieldCheck, Zap, Coins, CheckCircle, RefreshCw } from 'lucide-react';
 
 export default function LandingPage() {
-  const { isConnected, connectWallet } = useWalletStore();
+  const { isConnected, connectWallet } = useWallet();
 
   return (
     <div className="space-y-20 py-10">

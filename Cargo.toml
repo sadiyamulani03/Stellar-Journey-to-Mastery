@@ -3,4 +3,9 @@ resolver = "2"
 members = [
     "contracts/loyalty-token",
     "contracts/payment-logger",
+    "contracts/payloyal-resolver",
 ]
+
+[profile.release]
+overflow-checks = true
+

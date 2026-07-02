@@ -3,10 +3,12 @@ import "./globals.css";
 import React from "react";
 import Providers from "./providers";
 import Navigation from "../components/Navigation";
+import ToastContainer from "../components/ToastContainer";
+import GlobalInit from "../components/GlobalInit";
 
 export const metadata: Metadata = {
-  title: "payLoyal | Stellar Escrow & Loyalty Payouts",
-  description: "A startup-grade payroll streams and automated escrow platform built on Stellar Soroban with loyalty points reward system.",
+  title: "payLoyal | Streaming Escrow & Dispute Resolution",
+  description: "A startup-grade second-by-second linear payroll streaming and decentralized arbiter dispute resolution platform built on Stellar.",
 };
 
 export default function RootLayout({
@@ -23,10 +25,12 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground min-h-screen flex flex-col font-sans antialiased overflow-x-hidden">
         <Providers>
+          <GlobalInit />
           <Navigation />
           <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </main>
+          <ToastContainer />
         </Providers>
       </body>
     </html>

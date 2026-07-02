@@ -181,7 +181,7 @@ Or fund via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator
 - [Stellar Laboratory](https://laboratory.stellar.org/)
 - [Stellar Expert Explorer](https://stellar.expert/)
 
-# payLoyal: Smart Escrow Payroll & Loyalty Rewards Protocol
+## 🟡 Level 3 — Orange Belt: payLoyal: Smart Escrow Payroll & Loyalty Rewards Protocol
 
 payLoyal is a production-grade, decentralized payroll escrow and builder loyalty rewards protocol built on the Stellar network using Soroban smart contracts. It enables employers to fund payroll streams inside an autonomous escrow environment, secure milestone delivery, and programmatically distribute payments to contractors while automatically minting loyalty point tokens to reward contribution volume.
 
@@ -377,3 +377,229 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 ## Live
 
 - **Live Link**: https://stellar-journey-to-mastery-1kzbuwjcw-sadiyamulani03s-projects.vercel.app/
+
+## 🟢 Level 4 — Green Belt: payLoyal V2 
+
+> A production-style Stellar payroll escrow and dispute platform built with Soroban, Next.js, and wallet-native UX.
+
+---
+
+## 📖 Overview
+
+payLoyal V2 is a Green Belt submission project that brings together payroll streaming, dispute handling, and modern wallet interaction on the Stellar network. The product is designed to feel like a real startup MVP where employers can fund and manage ongoing wage streams while contractors can withdraw earned funds and raise disputes when required.
+
+This version focuses on usability, reliability, and a polished demo experience rather than a simple tutorial implementation.
+
+---
+
+## 🚀 What This MVP Delivers
+
+- Real-time payroll streaming with pause and resume support
+- Escrow-based wage withdrawals for contractors
+- Dispute creation and arbiter voting flow
+- Live Soroban event-driven activity feed
+- Transaction lifecycle tracking for pending, processing, confirmed, and failed states
+- Responsive dashboard for desktop, tablet, and mobile screens
+- Lightweight analytics and monitoring hooks for product usage
+
+---
+
+## 🧩 Core Features
+
+### Product Experience
+- Connect a Stellar wallet with a smooth onboarding experience
+- Create and manage payroll streams from the dashboard
+- Track activity and transaction history in one place
+- Review dispute status and participate in resolution flows
+
+### Smart Contract Logic
+- Escrow-based stream lifecycle management
+- Secure withdrawal logic for earned wages
+- Dispute locking and resolution state handling
+- Event emission for frontend mirrors and activity tracking
+
+### Frontend Quality
+- Modern UI with Tailwind styling
+- Responsive layout and mobile-friendly navigation
+- Clear state feedback for wallet and transaction actions
+- Structured hooks and services for clean app logic
+
+---
+
+## 🛠️ Tech Stack
+
+| Area | Stack |
+|---|---|
+| Frontend | Next.js 15, React 19, TypeScript |
+| Styling | Tailwind CSS |
+| State Management | Zustand, React Query |
+| Wallet Integration | StellarWalletsKit |
+| Smart Contracts | Rust, Soroban |
+| Testing | Vitest, React Testing Library, Cargo tests |
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    User([Employer / Contractor / Arbiter]) --> Frontend[Next.js Frontend]
+    Frontend --> Store[Zustand Store]
+    Frontend --> Services[Stellar Service Layer]
+    Services --> Wallet[Stellar Wallets Kit]
+    Wallet --> RPC[Soroban RPC / Testnet]
+    RPC --> Escrow[Payment Logger Contract]
+    RPC --> Resolver[PayLoyal Resolver Contract]
+    RPC --> Loyalty[Loyalty Token Contract]
+    Escrow --> Activity[Activity Feed & Transactions]
+```
+
+---
+
+## 📦 Smart Contract Design
+
+The project uses three main contract areas:
+
+1. Payment Logger Contract
+   - Handles stream lifecycle steps
+   - Locks and releases funds based on agreed actions
+   - Supports dispute-triggered state changes
+
+2. PayLoyal Resolver Contract
+   - Supports dispute registration and voting
+   - Enables arbiter participation and outcome resolution
+
+3. Loyalty Token Contract
+   - Tracks reward-style token behavior for loyalty or contribution incentives
+
+---
+
+## 📁 Project Structure
+
+```bash
+contracts/
+  payment-logger/
+  payloyal-resolver/
+  loyalty-token/
+src/
+  app/
+  components/
+  hooks/
+  services/
+  store/
+scripts/
+```
+
+---
+
+## ⚙️ Local Development
+
+### Prerequisites
+- Node.js 18+
+- Rust and Cargo
+- A Stellar wallet such as Freighter
+
+### Installation
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 in your browser.
+
+---
+
+## 🧪 Testing
+
+### Frontend
+
+```bash
+npm run test
+```
+
+### Smart Contracts
+
+```bash
+cargo test --workspace
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a local environment file using [.env.example](.env.example) as a template:
+
+```env
+NEXT_PUBLIC_ESCROW_CONTRACT_ID=
+NEXT_PUBLIC_RESOLVER_CONTRACT_ID=
+NEXT_PUBLIC_LOYALTY_CONTRACT_ID=
+NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org
+NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org
+```
+
+The frontend service layer already provides default contract IDs for the current development flow, but custom deployment values should be set for production-style demos.
+
+---
+
+## 🚀 Deployment and Demo Notes
+
+- The app is structured for Stellar Testnet deployment
+- Contract addresses should be updated in the environment configuration before a public demo
+- The dashboard is designed to support a clean live walkthrough for judges, reviewers, and evaluators
+
+---
+
+## 📸 Screenshots
+
+The project should include:
+- Product UI screenshot
+- Mobile responsive view
+- Analytics or monitoring view
+- Demo transaction or activity feed screenshot
+
+---
+
+## 🎥 Demo Video
+
+Add a short walkthrough video showing:
+1. Wallet connection
+2. Stream creation and funding
+3. Withdraw and dispute flow
+4. Activity feed and transaction state updates
+
+---
+
+## 🔗 Live Demo
+
+Add the deployed demo URL here before submission.
+
+---
+
+## ✅ Submission Checklist
+
+Ensure the project meets all requested submission requirements before sharing it.
+
+### Required
+
+- Public GitHub repository
+- Complete documentation in the repository
+- Minimum 15+ meaningful commits
+- Live demo link
+- Contract deployment address
+- Screenshots showing:
+  - Product UI
+  - Mobile responsive design
+  - Analytics or monitoring setup
+- Demo video link
+- Proof of 10+ user wallet interactions
+- Basic user feedback summary
+
+---
+
+## 🙏 Acknowledgements
+
+- Stellar Development Foundation
+- Stellar Wallets Kit
+- Soroban community tooling
+- Open-source contributors and the broader Stellar ecosystem

@@ -1,13 +1,15 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
+import { useTxStore } from '../store/useTxStore';
 
 const { rpc, Contract, nativeToScVal, scValToNative, TransactionBuilder, Account, Networks: SDKNetworks } = StellarSdk;
 
-// Default contract addresses on Testnet. Can be changed if redeployed.
-export const PAYMENT_LOGGER_CONTRACT_ID = 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ';
-export const LOYALTY_TOKEN_CONTRACT_ID = 'CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F';
+// Load contract addresses from environment or fall back to Testnet defaults
+export const PAYMENT_LOGGER_CONTRACT_ID = process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ID || 'CA2CPOMEE7EBGSSVU62T6HLG44WDOVEZAGTQGVW3KGV6PJ62R765IJEJ';
+export const LOYALTY_TOKEN_CONTRACT_ID = process.env.NEXT_PUBLIC_LOYALTY_CONTRACT_ID || 'CCIWJOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU636F';
+export const PAYLOYAL_RESOLVER_CONTRACT_ID = process.env.NEXT_PUBLIC_RESOLVER_CONTRACT_ID || 'CC3JOKEYK623T4O72D6Q3W4H5LSPYCRQ6Z47VQDTRMEYV3JCPXU63RESOLV';
 
-const RPC_URL = 'https://soroban-testnet.stellar.org';
-const HORIZON_URL = 'https://horizon-testnet.stellar.org';
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
+const HORIZON_URL = process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org';
 
 export const rpcServer = new rpc.Server(RPC_URL);
 export const horizonServer = new StellarSdk.Horizon.Server(HORIZON_URL);
@@ -15,14 +17,33 @@ export const horizonServer = new StellarSdk.Horizon.Server(HORIZON_URL);
 // Dummy account for read-only simulations
 const DUMMY_PUBLIC_KEY = 'GBH6XRNQXMMXXCZKZKJFPNBQXFFQ2AZONNFEE4XUN4YKG2CGW3XB5V24';
 
-export interface AgreementData {
+export interface StreamData {
   id: number;
   employer: string;
   contractor: string;
   token: string;
   amount: number;
-  status: number; // 0 = Created, 1 = Funded/Active, 2 = Completed, 3 = Cancelled
+  startTime: number;
+  endTime: number;
+  withdrawnAmount: number;
+  status: number; // 0 = Created, 1 = Active, 2 = Completed, 3 = Paused, 4 = Disputed
   title: string;
+  lastPausedTime: number;
+  totalPausedDuration: number;
+}
+
+export interface DisputeData {
+  id: number;
+  streamId: number;
+  employer: string;
+  contractor: string;
+  amountLocked: number;
+  status: number; // 0 = Open, 1 = Resolved
+  employerVotes: number;
+  contractorVotes: number;
+  endTime: number;
+  feeAmount: number;
+  escrowContract: string;
 }
 
 /**
@@ -59,26 +80,26 @@ const simulateCall = async (contractId: string, functionName: string, ...args: a
 };
 
 /**
- * Fetch total agreements count from contract.
+ * Fetch total streams count from contract.
  */
-export const getAgreementCount = async (): Promise<number> => {
+export const getStreamCount = async (): Promise<number> => {
   try {
     const count = await simulateCall(PAYMENT_LOGGER_CONTRACT_ID, 'get_count');
     return count ? Number(count) : 0;
   } catch (e) {
-    console.error('Failed to get agreement count:', e);
+    console.error('Failed to get stream count:', e);
     return 0;
   }
 };
 
 /**
- * Fetch a specific agreement.
+ * Fetch a specific stream.
  */
-export const fetchAgreement = async (id: number): Promise<AgreementData | null> => {
+export const fetchStream = async (id: number): Promise<StreamData | null> => {
   try {
     const result = await simulateCall(
       PAYMENT_LOGGER_CONTRACT_ID,
-      'fetch_agreement',
+      'fetch_stream',
       nativeToScVal(BigInt(id), { type: 'u64' })
     );
 
@@ -92,23 +113,28 @@ export const fetchAgreement = async (id: number): Promise<AgreementData | null> 
       contractor: result.contractor,
       token: result.token,
       amount: Number(result.amount) / 1e7,
+      startTime: Number(result.start_time),
+      endTime: Number(result.end_time),
+      withdrawnAmount: Number(result.withdrawn_amount) / 1e7,
       status: Number(result.status),
-      title: result.title || 'Escrow Agreement',
+      title: result.title || 'Wage Stream',
+      lastPausedTime: Number(result.last_paused_time),
+      totalPausedDuration: Number(result.total_paused_duration),
     };
   } catch (e) {
-    console.error(`Failed to fetch agreement ${id}:`, e);
+    console.error(`Failed to fetch stream ${id}:`, e);
     return null;
   }
 };
 
 /**
- * Fetch all agreements.
+ * Fetch all streams.
  */
-export const fetchAllAgreements = async (): Promise<AgreementData[]> => {
-  const count = await getAgreementCount();
-  const list: AgreementData[] = [];
+export const fetchAllStreams = async (): Promise<StreamData[]> => {
+  const count = await getStreamCount();
+  const list: StreamData[] = [];
   for (let i = 1; i <= count; i++) {
-    const item = await fetchAgreement(i);
+    const item = await fetchStream(i);
     if (item) {
       list.push(item);
     }
@@ -135,6 +161,104 @@ export const getPoints = async (userAddress: string): Promise<number> => {
 };
 
 /**
+ * Fetch arbiter stake balance.
+ */
+export const getArbiterStake = async (arbiterAddress: string): Promise<number> => {
+  try {
+    const scValUser = nativeToScVal(StellarSdk.Address.fromString(arbiterAddress));
+    const stake = await simulateCall(
+      PAYLOYAL_RESOLVER_CONTRACT_ID,
+      'get_arbiter_stake',
+      scValUser
+    );
+    return stake ? Number(stake) / 1e7 : 0;
+  } catch (e) {
+    console.warn(`Unable to fetch arbiter stake for ${arbiterAddress}:`, e);
+    return 0;
+  }
+};
+
+/**
+ * Fetch arbiter active votes count.
+ */
+export const getArbiterActiveVotes = async (arbiterAddress: string): Promise<number> => {
+  try {
+    const scValUser = nativeToScVal(StellarSdk.Address.fromString(arbiterAddress));
+    const votes = await simulateCall(
+      PAYLOYAL_RESOLVER_CONTRACT_ID,
+      'get_arbiter_active_votes',
+      scValUser
+    );
+    return votes ? Number(votes) : 0;
+  } catch (e) {
+    console.warn(`Unable to fetch active votes for ${arbiterAddress}:`, e);
+    return 0;
+  }
+};
+
+/**
+ * Fetch a specific dispute.
+ */
+export const fetchDispute = async (id: number): Promise<DisputeData | null> => {
+  try {
+    const result = await simulateCall(
+      PAYLOYAL_RESOLVER_CONTRACT_ID,
+      'fetch_dispute',
+      nativeToScVal(BigInt(id), { type: 'u64' })
+    );
+
+    if (!result || result.id === 0n || result.id === 0) {
+      return null;
+    }
+
+    return {
+      id: Number(result.id),
+      streamId: Number(result.stream_id),
+      employer: result.employer,
+      contractor: result.contractor,
+      amountLocked: Number(result.amount_locked) / 1e7,
+      status: Number(result.status),
+      employerVotes: Number(result.employer_votes),
+      contractorVotes: Number(result.contractor_votes),
+      endTime: Number(result.end_time),
+      feeAmount: Number(result.fee_amount) / 1e7,
+      escrowContract: result.escrow_contract,
+    };
+  } catch (e) {
+    console.error(`Failed to fetch dispute ${id}:`, e);
+    return null;
+  }
+};
+
+/**
+ * Fetch total disputes count.
+ */
+export const getDisputeCount = async (): Promise<number> => {
+  try {
+    const count = await simulateCall(PAYLOYAL_RESOLVER_CONTRACT_ID, 'get_count');
+    return count ? Number(count) : 0;
+  } catch (e) {
+    console.error('Failed to get dispute count:', e);
+    return 0;
+  }
+};
+
+/**
+ * Fetch all disputes.
+ */
+export const fetchAllDisputes = async (): Promise<DisputeData[]> => {
+  const count = await getDisputeCount();
+  const list: DisputeData[] = [];
+  for (let i = 1; i <= count; i++) {
+    const item = await fetchDispute(i);
+    if (item) {
+      list.push(item);
+    }
+  }
+  return list;
+};
+
+/**
  * Sign and submit a transaction using StellarWalletsKit.
  */
 const signAndSubmitTransaction = async (
@@ -142,8 +266,10 @@ const signAndSubmitTransaction = async (
   publicKey: string,
   contractId: string,
   functionName: string,
-  args: any[]
+  args: any[],
+  txStoreId?: string
 ): Promise<string> => {
+  const txStore = useTxStore.getState();
   try {
     const account = await horizonServer.loadAccount(publicKey);
     const contract = new Contract(contractId);
@@ -156,7 +282,13 @@ const signAndSubmitTransaction = async (
       .setTimeout(60)
       .build();
 
+    // Prepare transaction simulates it, setting appropriate resource bounds
     const preparedTx = await rpcServer.prepareTransaction(rawTx);
+
+    // Prompt user for signature (moves tx to processing state)
+    if (txStoreId) {
+      txStore.updateTransaction(txStoreId, { status: 'processing' });
+    }
 
     const { signedTxXdr } = await kit.signTransaction(preparedTx.toXDR(), {
       address: publicKey,
@@ -190,91 +322,240 @@ const signAndSubmitTransaction = async (
       (rejectErr as any).code = 'USER_REJECTED';
       throw rejectErr;
     }
+    if (errMsg.includes('insufficient') || errMsg.includes('underfunded')) {
+      const insErr = new Error('Insufficient balance to perform transaction.');
+      (insErr as any).code = 'INSUFFICIENT_BALANCE';
+      throw insErr;
+    }
     throw err;
   }
 };
 
 /**
- * Employer creates a new payroll agreement.
+ * Employer creates a new payroll stream.
  */
-export const createAgreementOnChain = async (
+export const createStreamOnChain = async (
   kit: any,
   employer: string,
   contractor: string,
   token: string,
   amount: number,
-  title: string
+  durationSeconds: number,
+  title: string,
+  txStoreId?: string
 ): Promise<string> => {
   const amountStroops = BigInt(Math.round(amount * 1e7));
   const scEmployer = nativeToScVal(StellarSdk.Address.fromString(employer));
   const scContractor = nativeToScVal(StellarSdk.Address.fromString(contractor));
   const scToken = nativeToScVal(StellarSdk.Address.fromString(token));
   const scAmount = nativeToScVal(amountStroops, { type: 'i128' });
+  const scDuration = nativeToScVal(BigInt(durationSeconds), { type: 'u64' });
   const scTitle = nativeToScVal(title, { type: 'string' });
 
   return signAndSubmitTransaction(
     kit,
     employer,
     PAYMENT_LOGGER_CONTRACT_ID,
-    'create_agreement',
-    [scEmployer, scContractor, scToken, scAmount, scTitle]
+    'create_stream',
+    [scEmployer, scContractor, scToken, scAmount, scDuration, scTitle],
+    txStoreId
   );
 };
 
 /**
- * Employer funds an escrow agreement.
+ * Employer funds a stream.
  */
-export const fundAgreementOnChain = async (
+export const fundStreamOnChain = async (
   kit: any,
   employer: string,
-  agreementId: number
+  streamId: number,
+  txStoreId?: string
 ): Promise<string> => {
-  const scId = nativeToScVal(BigInt(agreementId), { type: 'u64' });
+  const scId = nativeToScVal(BigInt(streamId), { type: 'u64' });
 
   return signAndSubmitTransaction(
     kit,
     employer,
     PAYMENT_LOGGER_CONTRACT_ID,
-    'fund_agreement',
-    [scId]
+    'fund_stream',
+    [scId],
+    txStoreId
   );
 };
 
 /**
- * Employer releases payment from escrow.
+ * Employer pauses a stream.
  */
-export const releasePaymentOnChain = async (
+export const pauseStreamOnChain = async (
   kit: any,
   employer: string,
-  agreementId: number
+  streamId: number,
+  txStoreId?: string
 ): Promise<string> => {
-  const scId = nativeToScVal(BigInt(agreementId), { type: 'u64' });
+  const scId = nativeToScVal(BigInt(streamId), { type: 'u64' });
 
   return signAndSubmitTransaction(
     kit,
     employer,
     PAYMENT_LOGGER_CONTRACT_ID,
-    'release_payment',
-    [scId]
+    'pause_stream',
+    [scId],
+    txStoreId
   );
 };
 
 /**
- * Employer cancels an agreement.
+ * Employer resumes a stream.
  */
-export const cancelAgreementOnChain = async (
+export const resumeStreamOnChain = async (
   kit: any,
   employer: string,
-  agreementId: number
+  streamId: number,
+  txStoreId?: string
 ): Promise<string> => {
-  const scId = nativeToScVal(BigInt(agreementId), { type: 'u64' });
+  const scId = nativeToScVal(BigInt(streamId), { type: 'u64' });
 
   return signAndSubmitTransaction(
     kit,
     employer,
     PAYMENT_LOGGER_CONTRACT_ID,
-    'cancel_agreement',
-    [scId]
+    'resume_stream',
+    [scId],
+    txStoreId
+  );
+};
+
+/**
+ * Contractor claims/withdraws wages.
+ */
+export const withdrawWagesOnChain = async (
+  kit: any,
+  contractor: string,
+  streamId: number,
+  txStoreId?: string
+): Promise<string> => {
+  const scId = nativeToScVal(BigInt(streamId), { type: 'u64' });
+
+  return signAndSubmitTransaction(
+    kit,
+    contractor,
+    PAYMENT_LOGGER_CONTRACT_ID,
+    'withdraw_wages',
+    [scId],
+    txStoreId
+  );
+};
+
+/**
+ * Employer or Contractor raises dispute.
+ */
+export const raiseDisputeOnChain = async (
+  kit: any,
+  callerAddress: string,
+  streamId: number,
+  txStoreId?: string
+): Promise<string> => {
+  const scCaller = nativeToScVal(StellarSdk.Address.fromString(callerAddress));
+  const scId = nativeToScVal(BigInt(streamId), { type: 'u64' });
+
+  return signAndSubmitTransaction(
+    kit,
+    callerAddress,
+    PAYMENT_LOGGER_CONTRACT_ID,
+    'raise_dispute',
+    [scCaller, scId],
+    txStoreId
+  );
+};
+
+/**
+ * Arbiter stakes security bond.
+ */
+export const stakeBondOnChain = async (
+  kit: any,
+  arbiterAddress: string,
+  amount: number,
+  txStoreId?: string
+): Promise<string> => {
+  const amountStroops = BigInt(Math.round(amount * 1e7));
+  const scArbiter = nativeToScVal(StellarSdk.Address.fromString(arbiterAddress));
+  const scAmount = nativeToScVal(amountStroops, { type: 'i128' });
+
+  return signAndSubmitTransaction(
+    kit,
+    arbiterAddress,
+    PAYLOYAL_RESOLVER_CONTRACT_ID,
+    'stake_bond',
+    [scArbiter, scAmount],
+    txStoreId
+  );
+};
+
+/**
+ * Arbiter withdraws security bond.
+ */
+export const withdrawBondOnChain = async (
+  kit: any,
+  arbiterAddress: string,
+  amount: number,
+  txStoreId?: string
+): Promise<string> => {
+  const amountStroops = BigInt(Math.round(amount * 1e7));
+  const scArbiter = nativeToScVal(StellarSdk.Address.fromString(arbiterAddress));
+  const scAmount = nativeToScVal(amountStroops, { type: 'i128' });
+
+  return signAndSubmitTransaction(
+    kit,
+    arbiterAddress,
+    PAYLOYAL_RESOLVER_CONTRACT_ID,
+    'withdraw_bond',
+    [scArbiter, scAmount],
+    txStoreId
+  );
+};
+
+/**
+ * Arbiter votes on dispute.
+ */
+export const voteOnDisputeOnChain = async (
+  kit: any,
+  arbiterAddress: string,
+  disputeId: number,
+  vote: number, // 0 = Employer, 1 = Contractor
+  txStoreId?: string
+): Promise<string> => {
+  const scArbiter = nativeToScVal(StellarSdk.Address.fromString(arbiterAddress));
+  const scId = nativeToScVal(BigInt(disputeId), { type: 'u64' });
+  const scVote = nativeToScVal(vote, { type: 'u32' });
+
+  return signAndSubmitTransaction(
+    kit,
+    arbiterAddress,
+    PAYLOYAL_RESOLVER_CONTRACT_ID,
+    'vote_on_dispute',
+    [scArbiter, scId, scVote],
+    txStoreId
+  );
+};
+
+/**
+ * Resolves open dispute.
+ */
+export const resolveDisputeOnChain = async (
+  kit: any,
+  callerAddress: string,
+  disputeId: number,
+  txStoreId?: string
+): Promise<string> => {
+  const scId = nativeToScVal(BigInt(disputeId), { type: 'u64' });
+
+  return signAndSubmitTransaction(
+    kit,
+    callerAddress,
+    PAYLOYAL_RESOLVER_CONTRACT_ID,
+    'resolve_dispute',
+    [scId],
+    txStoreId
   );
 };
 
@@ -299,7 +580,7 @@ export const fetchRecentEvents = async (): Promise<StellarEvent[]> => {
       filters: [
         {
           type: 'contract',
-          contractIds: [PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID],
+          contractIds: [PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID],
         },
       ],
     });
@@ -314,7 +595,7 @@ export const fetchRecentEvents = async (): Promise<StellarEvent[]> => {
 
       return {
         id: evt.id,
-        contractId: evt.contractId,
+        contractId: evt.contractId?.toString() || '',
         type: evt.topic.length > 1 ? scValToNative(evt.topic[1]) : 'unknown',
         timestamp: new Date().toLocaleTimeString(),
         data: decodedData,

@@ -5,13 +5,14 @@ import { useTxStore, TransactionItem } from '../../store/useTxStore';
 import { History, CheckCircle2, Clock, XCircle, AlertCircle, RefreshCw, Trash2, ArrowUpRight } from 'lucide-react';
 
 export default function TxCenter() {
-  const { transactions, clearTransactions, updateTransaction } = useTxStore();
+  const { transactions, clearTransactions } = useTxStore();
 
   const getStatusIcon = (status: TransactionItem['status']) => {
     switch (status) {
       case 'confirmed':
         return <CheckCircle2 className="h-5 w-5 text-green-400" />;
       case 'pending':
+        return <Clock className="h-5 w-5 text-yellow-400" />;
       case 'processing':
         return <Clock className="h-5 w-5 text-yellow-400 animate-spin" />;
       case 'failed':
@@ -24,6 +25,7 @@ export default function TxCenter() {
       case 'confirmed':
         return 'bg-green-500/10 border-green-500/20 text-green-400';
       case 'pending':
+        return 'bg-yellow-500/5 border-yellow-500/10 text-yellow-500';
       case 'processing':
         return 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
       case 'failed':
@@ -31,16 +33,14 @@ export default function TxCenter() {
     }
   };
 
-  const handleRetryMock = (tx: TransactionItem) => {
-    const retryId = tx.id;
-    updateTransaction(retryId, { status: 'processing', error: undefined });
-    setTimeout(() => {
-      updateTransaction(retryId, {
-        status: 'confirmed',
-        hash: 'mock_tx_retry_' + Math.random().toString(36).substring(7),
-        explorerLink: '#',
-      });
-    }, 2000);
+  const handleRetry = async (tx: TransactionItem) => {
+    if (tx.retryAction) {
+      try {
+        await tx.retryAction();
+      } catch (err) {
+        console.warn('Retry execution failed:', err);
+      }
+    }
   };
 
   return (
@@ -52,7 +52,7 @@ export default function TxCenter() {
             Transaction Management Center
           </h1>
           <p className="text-sm text-muted-foreground font-light">
-            Monitor transaction lifecycle state machine transitions (Pending &rarr; Processing &rarr; Confirmed).
+            Monitor real-time ledger submissions and manage transaction lifecycles.
           </p>
         </div>
         
@@ -74,7 +74,7 @@ export default function TxCenter() {
               <History className="h-6 w-6" />
             </div>
             <p className="text-muted-foreground text-sm font-light">
-              No transactions triggered in this session. Create or execute agreement payouts to see logs.
+              No transactions triggered in this session. Initiate stream creation, staking, or payouts to monitor logs.
             </p>
           </div>
         ) : (
@@ -84,14 +84,14 @@ export default function TxCenter() {
                 key={tx.id}
                 className="bg-zinc-900/40 border border-border rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-zinc-800 transition-colors"
               >
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(tx.status)}
                     <span className="font-semibold text-white text-sm">{tx.title}</span>
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted-foreground font-light">
-                    <span>Initiated: {new Date(tx.timestamp).toLocaleTimeString()}</span>
+                    <span>Timestamp: {new Date(tx.timestamp).toLocaleTimeString()}</span>
                     {tx.hash && (
                       <span className="flex items-center gap-1">
                         Hash: <code className="bg-zinc-950 px-1 py-0.5 rounded text-accent font-semibold">{tx.hash.substring(0, 16)}...</code>
@@ -102,13 +102,13 @@ export default function TxCenter() {
                   {tx.error && (
                     <div className="bg-red-500/5 border border-red-500/10 rounded px-3 py-2 text-xs text-red-400/90 flex gap-1.5 mt-2">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                      <span>{tx.error}</span>
+                      <span className="break-all font-light">{tx.error}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusClass(tx.status)}`}>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${getStatusClass(tx.status)}`}>
                     {tx.status}
                   </span>
                   
@@ -124,13 +124,14 @@ export default function TxCenter() {
                     </a>
                   )}
 
-                  {tx.status === 'failed' && (
+                  {tx.status === 'failed' && tx.retryAction && (
                     <button
-                      onClick={() => handleRetryMock(tx)}
-                      className="bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 p-2 rounded-lg transition-colors"
+                      onClick={() => handleRetry(tx)}
+                      className="bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 p-2 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
                       title="Retry Transaction"
                     >
-                      <RefreshCw className="h-4 w-4" />
+                      <RefreshCw className="h-4.5 w-4.5" />
+                      <span>Retry</span>
                     </button>
                   )}
                 </div>

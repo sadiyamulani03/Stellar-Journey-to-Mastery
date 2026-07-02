@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useWalletStore } from '../../store/useWalletStore';
+import { useWallet } from '../../hooks/useWallet';
 import { Settings as SettingsIcon, Shield, Server, Wallet, Key, Cpu } from 'lucide-react';
-import { PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID } from '../../services/stellar';
+import { PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID } from '../../services/stellar';
 
 export default function SettingsPage() {
-  const { address, network, isConnected, setNetwork, connectWallet, disconnectWallet } = useWalletStore();
+  const { address, network, isConnected, setNetwork, connectWallet, disconnectWallet } = useWallet();
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -28,10 +28,6 @@ export default function SettingsPage() {
             <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-accent flex items-center gap-2">
               <Cpu className="h-4 w-4" />
               <span>Protocol Config</span>
-            </button>
-            <button className="w-full text-left px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-zinc-900 hover:text-white transition-all flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              <span>Developer Keys</span>
             </button>
           </div>
         </div>
@@ -137,11 +133,21 @@ export default function SettingsPage() {
             <div className="space-y-4 pt-2">
               <div className="space-y-1">
                 <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-muted-foreground">Escrow Payroll Contract ID</span>
+                  <span className="text-muted-foreground">Streaming Escrow Contract ID</span>
                   <a href={`https://stellar.expert/explorer/testnet/contract/${PAYMENT_LOGGER_CONTRACT_ID}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">Explorer</a>
                 </div>
                 <code className="bg-zinc-900 border border-border px-3 py-2 rounded-lg text-xs text-white block break-all font-mono">
                   {PAYMENT_LOGGER_CONTRACT_ID}
+                </code>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-muted-foreground">Dispute Resolver Contract ID</span>
+                  <a href={`https://stellar.expert/explorer/testnet/contract/${PAYLOYAL_RESOLVER_CONTRACT_ID}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">Explorer</a>
+                </div>
+                <code className="bg-zinc-900 border border-border px-3 py-2 rounded-lg text-xs text-white block break-all font-mono">
+                  {PAYLOYAL_RESOLVER_CONTRACT_ID}
                 </code>
               </div>
 

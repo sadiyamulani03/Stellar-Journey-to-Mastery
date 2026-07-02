@@ -3,16 +3,17 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useWalletStore } from '../store/useWalletStore';
-import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { useWallet } from '../hooks/useWallet';
+import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { address, balance, network, isConnected, isConnecting, connectWallet, disconnectWallet } = useWalletStore();
+  const { address, balance, network, isConnected, isConnecting, connectWallet, disconnectWallet } = useWallet();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
+    { name: 'Dispute Hub', href: '/disputes', icon: Shield },
     { name: 'Activity Feed', href: '/activity', icon: Activity },
     { name: 'Transaction Center', href: '/tx-center', icon: History },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },

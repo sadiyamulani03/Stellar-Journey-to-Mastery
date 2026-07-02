@@ -8,6 +8,7 @@ export interface TransactionItem {
   timestamp: number;
   error?: string;
   explorerLink?: string;
+  retryAction?: () => Promise<any>;
 }
 
 interface TxState {

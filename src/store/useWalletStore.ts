@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { trackProductEvent } from '../lib/monitoring';
 
 // Defer StellarWalletsKit loading to client-side only to support Next.js server-side pre-rendering
 let StellarWalletsKit: any = null;
@@ -56,6 +57,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         isConnected: true,
         isConnecting: false,
       });
+      trackProductEvent('wallet_connected', { network: 'TESTNET' });
       await get().updateBalance();
       return address;
     } catch (err: any) {
@@ -81,6 +83,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
     set({ address: null, isConnected: false, balance: '0.00' });
+    trackProductEvent('wallet_disconnected');
   },
 
   setNetwork: (network: string) => {
