@@ -11,6 +11,7 @@ export function useAuth() {
   return {
     user: auth.user,
     isAuthenticated: auth.isAuthenticated,
+    isInitialized: auth.isInitialized,
     isLoading: auth.isLoading,
     error: auth.error,
     login: auth.login,

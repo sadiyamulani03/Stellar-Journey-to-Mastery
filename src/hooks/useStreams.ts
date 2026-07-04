@@ -1,28 +1,44 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  fetchAllStreams, 
-  createStreamOnChain, 
-  fundStreamOnChain, 
-  pauseStreamOnChain, 
-  resumeStreamOnChain, 
-  withdrawWagesOnChain, 
-  raiseDisputeOnChain, 
-  StreamData 
+import {
+  fetchAllStreams,
+  createStreamOnChain,
+  fundStreamOnChain,
+  pauseStreamOnChain,
+  resumeStreamOnChain,
+  withdrawWagesOnChain,
+  raiseDisputeOnChain,
+  StreamData,
 } from '../services/stellar';
 import { useTxStore } from '../store/useTxStore';
 import { useToastStore } from '../store/useToastStore';
 import { useWalletStore } from '../store/useWalletStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { trackProductEvent } from '../lib/monitoring';
+
+function filterStreamsForUser(streams: StreamData[], address: string | null) {
+  if (!address) {
+    return [];
+  }
+
+  return streams.filter(
+    (stream) => stream.employer === address || stream.contractor === address
+  );
+}
 
 export function useStreams() {
   const queryClient = useQueryClient();
   const { kit, address, isConnected } = useWalletStore();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const { addTransaction, updateTransaction } = useTxStore();
   const { addToast } = useToastStore();
 
   const streamsQuery = useQuery<StreamData[]>({
-    queryKey: ['streams'],
-    queryFn: fetchAllStreams,
+    queryKey: ['streams', userId, address],
+    queryFn: async () => {
+      const allStreams = await fetchAllStreams();
+      return filterStreamsForUser(allStreams, address);
+    },
+    enabled: !!userId,
   });
 
   const createStreamMutation = useMutation({
@@ -54,7 +70,7 @@ export function useStreams() {
             explorerLink: `https://stellar.expert/explorer/testnet/tx/${hash}` 
           });
           addToast(`Stream "${title}" created successfully!`, 'success');
-          trackProductEvent('stream_created', { title, amount, durationSeconds });
+          trackProductEvent('stream_created', { title, amount, durationSeconds }, userId);
           queryClient.invalidateQueries({ queryKey: ['streams'] });
           return hash;
         } catch (e: any) {
@@ -97,7 +113,7 @@ export function useStreams() {
             explorerLink: `https://stellar.expert/explorer/testnet/tx/${hash}` 
           });
           addToast(`Stream "${title}" funded and active!`, 'success');
-          trackProductEvent('stream_funded', { streamId, title });
+          trackProductEvent('stream_funded', { streamId, title }, userId);
           queryClient.invalidateQueries({ queryKey: ['streams'] });
           return hash;
         } catch (e: any) {
@@ -140,7 +156,7 @@ export function useStreams() {
             explorerLink: `https://stellar.expert/explorer/testnet/tx/${hash}` 
           });
           addToast(`Stream "${title}" paused.`, 'warning');
-          trackProductEvent('stream_paused', { streamId, title });
+          trackProductEvent('stream_paused', { streamId, title }, userId);
           queryClient.invalidateQueries({ queryKey: ['streams'] });
           return hash;
         } catch (e: any) {
@@ -183,7 +199,7 @@ export function useStreams() {
             explorerLink: `https://stellar.expert/explorer/testnet/tx/${hash}` 
           });
           addToast(`Stream "${title}" resumed.`, 'success');
-          trackProductEvent('stream_resumed', { streamId, title });
+          trackProductEvent('stream_resumed', { streamId, title }, userId);
           queryClient.invalidateQueries({ queryKey: ['streams'] });
           return hash;
         } catch (e: any) {
@@ -226,7 +242,7 @@ export function useStreams() {
             explorerLink: `https://stellar.expert/explorer/testnet/tx/${hash}` 
           });
           addToast(`Successfully claimed wages for: ${title}`, 'success');
-          trackProductEvent('stream_withdrawn', { streamId, title });
+          trackProductEvent('stream_withdrawn', { streamId, title }, userId);
           queryClient.invalidateQueries({ queryKey: ['streams'] });
           queryClient.invalidateQueries({ queryKey: ['loyaltyPoints', address] });
           queryClient.invalidateQueries({ queryKey: ['walletBalance', address] });

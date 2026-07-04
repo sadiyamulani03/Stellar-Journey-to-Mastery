@@ -3,10 +3,12 @@
 import { useAuth } from '../hooks/useAuth';
 import { useWallet } from '../hooks/useWallet';
 import { useEventStreaming } from '../hooks/useEventStreaming';
+import { useUserSession } from '../hooks/useUserSession';
 
 export default function GlobalInit() {
-  useAuth();            // Handles auth session recovery
-  useWallet();          // Handles automatic wallet session recovery
-  useEventStreaming();  // Handles global event polling & toast alerts
+  useAuth();
+  useUserSession();
+  useWallet();
+  useEventStreaming();
   return null;
 }

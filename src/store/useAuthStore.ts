@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getApiErrorMessage, parseJsonResponse } from '../lib/api';
+import { resetUserSession } from '../lib/reset-user-session';
 
 export interface UserProfile {
   id: string;
@@ -76,6 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    const currentUserId = get().user?.id ?? null;
     set({ isLoading: true, error: null });
     try {
       await fetch('/api/auth/logout', {
@@ -85,7 +87,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // ignore logout failures
     }
-    set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+    await resetUserSession(undefined, currentUserId);
+    set({ user: null, isAuthenticated: false, isLoading: false, error: null, isInitialized: true });
   },
 
   restoreSession: async () => {

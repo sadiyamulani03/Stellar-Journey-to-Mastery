@@ -1,27 +1,43 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  fetchAllDisputes, 
-  getArbiterStake, 
-  getArbiterActiveVotes, 
-  stakeBondOnChain, 
-  withdrawBondOnChain, 
-  voteOnDisputeOnChain, 
-  resolveDisputeOnChain, 
-  DisputeData 
+import {
+  fetchAllDisputes,
+  getArbiterStake,
+  getArbiterActiveVotes,
+  stakeBondOnChain,
+  withdrawBondOnChain,
+  voteOnDisputeOnChain,
+  resolveDisputeOnChain,
+  DisputeData,
 } from '../services/stellar';
 import { useTxStore } from '../store/useTxStore';
 import { useToastStore } from '../store/useToastStore';
 import { useWalletStore } from '../store/useWalletStore';
+import { useAuthStore } from '../store/useAuthStore';
+
+function filterDisputesForUser(disputes: DisputeData[], address: string | null) {
+  if (!address) {
+    return [];
+  }
+
+  return disputes.filter(
+    (dispute) => dispute.employer === address || dispute.contractor === address
+  );
+}
 
 export function useDisputes() {
   const queryClient = useQueryClient();
   const { kit, address, isConnected } = useWalletStore();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const { addTransaction } = useTxStore();
   const { addToast } = useToastStore();
 
   const disputesQuery = useQuery<DisputeData[]>({
-    queryKey: ['disputes'],
-    queryFn: fetchAllDisputes,
+    queryKey: ['disputes', userId, address],
+    queryFn: async () => {
+      const allDisputes = await fetchAllDisputes();
+      return filterDisputesForUser(allDisputes, address);
+    },
+    enabled: !!userId,
   });
 
   const arbiterStakeQuery = useQuery<number>({

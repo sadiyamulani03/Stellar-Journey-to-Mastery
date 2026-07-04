@@ -1,3 +1,5 @@
+import { readScopedJson, writeScopedJson } from './user-scope';
+
 export type ProductEventName = 'wallet_connected' | 'wallet_disconnected' | 'stream_created' | 'stream_funded' | 'stream_paused' | 'stream_resumed' | 'stream_withdrawn' | 'dispute_raised' | 'dispute_resolved';
 
 export interface ProductEventRecord {
@@ -26,28 +28,30 @@ const emptyCounts = (): Record<ProductEventName, number> => ({
   dispute_resolved: 0,
 });
 
-export function trackProductEvent(event: ProductEventName, payload?: Record<string, unknown>) {
-  if (typeof window === 'undefined') return;
-
-  const existing = window.localStorage.getItem(STORAGE_KEY);
-  const records: ProductEventRecord[] = existing ? JSON.parse(existing) : [];
-  records.push({ event, payload, timestamp: new Date().toISOString() });
-
-  const trimmed = records.slice(-50);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-}
-
-export function getAnalyticsSnapshot(): AnalyticsSnapshot {
-  if (typeof window === 'undefined') {
-    return {
-      totalEvents: 0,
-      events: emptyCounts(),
-      recent: [],
-    };
+function readRecords(userId?: string | null): ProductEventRecord[] {
+  if (typeof window === 'undefined' || !userId) {
+    return [];
   }
 
-  const existing = window.localStorage.getItem(STORAGE_KEY);
-  const records: ProductEventRecord[] = existing ? JSON.parse(existing) : [];
+  return readScopedJson<ProductEventRecord[]>(STORAGE_KEY, userId, []);
+}
+
+export function trackProductEvent(
+  event: ProductEventName,
+  payload?: Record<string, unknown>,
+  userId?: string | null
+) {
+  if (typeof window === 'undefined' || !userId) {
+    return;
+  }
+
+  const records = readRecords(userId);
+  records.push({ event, payload, timestamp: new Date().toISOString() });
+  writeScopedJson(STORAGE_KEY, userId, records.slice(-50));
+}
+
+export function getAnalyticsSnapshot(userId?: string | null): AnalyticsSnapshot {
+  const records = readRecords(userId);
 
   const counts = emptyCounts();
   for (const record of records) {

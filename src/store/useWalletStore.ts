@@ -30,8 +30,8 @@ interface WalletState {
   isConnecting: boolean;
   error: string | null;
   kit: any;
-  connectWallet: () => Promise<string | null>;
-  disconnectWallet: () => Promise<void>;
+  connectWallet: (userId?: string) => Promise<string | null>;
+  disconnectWallet: (userId?: string) => Promise<void>;
   setNetwork: (network: string) => void;
   updateBalance: () => Promise<void>;
 }
@@ -45,7 +45,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   error: null,
   kit: typeof window !== 'undefined' ? StellarWalletsKit : null,
 
-  connectWallet: async () => {
+  connectWallet: async (userId?: string) => {
     if (typeof window === 'undefined' || !StellarWalletsKit) {
       set({ error: 'Wallet kit is not available on server.' });
       return null;
@@ -58,7 +58,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         isConnected: true,
         isConnecting: false,
       });
-      trackProductEvent('wallet_connected', { network: 'TESTNET' });
+      trackProductEvent('wallet_connected', { network: 'TESTNET' }, userId);
       await get().updateBalance();
       return address;
     } catch (err: any) {
@@ -75,7 +75,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     }
   },
 
-  disconnectWallet: async () => {
+  disconnectWallet: async (userId?: string) => {
     if (typeof window !== 'undefined' && StellarWalletsKit) {
       try {
         await StellarWalletsKit.disconnect();
@@ -84,7 +84,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       }
     }
     set({ address: null, isConnected: false, balance: '0.00' });
-    trackProductEvent('wallet_disconnected');
+    trackProductEvent('wallet_disconnected', undefined, userId);
   },
 
   setNetwork: (network: string) => {

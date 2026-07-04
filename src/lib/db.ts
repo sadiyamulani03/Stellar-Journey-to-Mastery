@@ -99,3 +99,18 @@ export function createUser(username: string, passwordHash: string, walletAddress
   writeDb(db);
   return newUser;
 }
+
+export function updateUserWallet(userId: string, walletAddress: string): UserRecord | undefined {
+  const db = readDb();
+  const userIndex = db.users.findIndex((user) => user.id === userId);
+  if (userIndex === -1) {
+    return undefined;
+  }
+
+  db.users[userIndex] = {
+    ...db.users[userIndex],
+    walletAddress: walletAddress.trim(),
+  };
+  writeDb(db);
+  return db.users[userIndex];
+}

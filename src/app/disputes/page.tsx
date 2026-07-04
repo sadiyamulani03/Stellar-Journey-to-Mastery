@@ -38,53 +38,11 @@ export default function DisputeHub() {
   const [stakeError, setStakeError] = useState<string | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
-  // Mock Disputes for demonstration / disconnected state
-  const [mockDisputes, setMockDisputes] = useState<DisputeData[]>([
-    {
-      id: 1,
-      streamId: 991,
-      employer: 'GBH6XRNQXMMXXCZKZKJFPNBQXFFQ2AZONNFEE4XUN4YKG2CGW3XB5V24',
-      contractor: 'GBA24HODL...',
-      amountLocked: 1100,
-      status: 0, // Open
-      employerVotes: 2,
-      contractorVotes: 3,
-      endTime: Math.floor(Date.now() / 1000) + 120, // Closes in 2 minutes
-      feeAmount: 55, // 5% fee
-      escrowContract: 'CCMQWEWUNR5LVWI6KSBCMILU66ZWCX3LVQDX7QB3OYFAZJZI7CDKLYDO',
-    },
-    {
-      id: 2,
-      streamId: 992,
-      employer: 'GB_EMPLOYER_DEMO_ADDRESS',
-      contractor: 'GB_CONTRACTOR_DEMO_ADDRESS',
-      amountLocked: 500,
-      status: 1, // Resolved
-      employerVotes: 1,
-      contractorVotes: 4,
-      endTime: Math.floor(Date.now() / 1000) - 3600, // Closed 1 hour ago
-      feeAmount: 25,
-      escrowContract: 'CCMQWEWUNR5LVWI6KSBCMILU66ZWCX3LVQDX7QB3OYFAZJZI7CDKLYDO',
-    }
-  ]);
+  const getDisputesList = (): DisputeData[] => disputes;
 
-  const [mockArbiterStake, setMockArbiterStake] = useState(100); // 100 XLM mock stake
-  const [mockActiveVotes, setMockActiveVotes] = useState(0);
+  const getArbiterStakeVal = (): number => (isConnected ? arbiterStake : 0);
 
-  const getDisputesList = (): DisputeData[] => {
-    if (!isConnected || disputes.length === 0) {
-      return mockDisputes;
-    }
-    return disputes;
-  };
-
-  const getArbiterStakeVal = (): number => {
-    return isConnected ? arbiterStake : mockArbiterStake;
-  };
-
-  const getActiveVotesCountVal = (): number => {
-    return isConnected ? activeVotesCount : mockActiveVotes;
-  };
+  const getActiveVotesCountVal = (): number => (isConnected ? activeVotesCount : 0);
 
   const handleStake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,15 +54,7 @@ export default function DisputeHub() {
     }
 
     if (!isConnected) {
-      // Mock Staking
-      setMockArbiterStake(prev => prev + amt);
-      setStakeAmount('');
-      addTransaction({
-        id: `mock-stake-${Date.now()}`,
-        hash: 'mock_tx_' + Math.random().toString(36).substring(7),
-        status: 'confirmed',
-        title: `Staked security bond: ${amt} XLM`,
-      });
+      setStakeError('Connect your wallet to stake a security bond.');
       return;
     }
 
@@ -138,15 +88,7 @@ export default function DisputeHub() {
     }
 
     if (!isConnected) {
-      // Mock Withdraw
-      setMockArbiterStake(prev => prev - amt);
-      setWithdrawAmount('');
-      addTransaction({
-        id: `mock-withdraw-${Date.now()}`,
-        hash: 'mock_tx_' + Math.random().toString(36).substring(7),
-        status: 'confirmed',
-        title: `Withdrew security bond: ${amt} XLM`,
-      });
+      setWithdrawError('Connect your wallet to withdraw your security bond.');
       return;
     }
 
@@ -165,25 +107,7 @@ export default function DisputeHub() {
     }
 
     if (!isConnected) {
-      // Mock voting action
-      setMockDisputes(prev => prev.map(d => {
-        if (d.id === disputeId) {
-          return {
-            ...d,
-            employerVotes: vote === 0 ? d.employerVotes + 1 : d.employerVotes,
-            contractorVotes: vote === 1 ? d.contractorVotes + 1 : d.contractorVotes,
-          };
-        }
-        return d;
-      }));
-      setMockActiveVotes(v => v + 1);
-
-      addTransaction({
-        id: `mock-vote-${disputeId}-${Date.now()}`,
-        hash: 'mock_tx_' + Math.random().toString(36).substring(7),
-        status: 'confirmed',
-        title: `Cast vote on dispute #${disputeId}: ${vote === 1 ? 'Release' : 'Refund'}`,
-      });
+      alert('Connect your wallet to vote on disputes.');
       return;
     }
 
@@ -196,30 +120,7 @@ export default function DisputeHub() {
 
   const handleResolve = async (disputeId: number, streamTitle: string) => {
     if (!isConnected) {
-      // Mock resolution
-      setMockDisputes(prev => prev.map(d => {
-        if (d.id === disputeId) {
-          return { ...d, status: 1 }; // Resolve
-        }
-        return d;
-      }));
-      setMockActiveVotes(0); // clear voting count in mock
-
-      // Simulate slashing of minority voters
-      const target = mockDisputes.find(d => d.id === disputeId);
-      if (target) {
-        const contractorWins = target.contractorVotes > target.employerVotes;
-        // Mock distribution simulation logic:
-        // We simulate that since we voted with majority, we get a payout
-        setMockArbiterStake(prev => prev + 10); // add reward points/tokens
-      }
-
-      addTransaction({
-        id: `mock-resolve-${disputeId}-${Date.now()}`,
-        hash: 'mock_tx_' + Math.random().toString(36).substring(7),
-        status: 'confirmed',
-        title: `Resolved dispute #${disputeId} (${streamTitle})`,
-      });
+      alert('Connect your wallet to resolve disputes.');
       return;
     }
 

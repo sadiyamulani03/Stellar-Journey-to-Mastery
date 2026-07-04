@@ -7,13 +7,17 @@ import { useAuth } from '../hooks/useAuth';
 export default function AuthGuard() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized, isLoading } = useAuth();
 
   useEffect(() => {
+    if (!isInitialized || isLoading) {
+      return;
+    }
+
     if (!pathname.startsWith('/auth') && !isAuthenticated) {
       router.replace('/auth');
     }
-  }, [pathname, isAuthenticated, router]);
+  }, [pathname, isAuthenticated, isInitialized, isLoading, router]);
 
   return null;
 }

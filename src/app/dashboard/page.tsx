@@ -33,7 +33,7 @@ import { getAnalyticsSnapshot } from '../../lib/monitoring';
 export default function Dashboard() {
   const router = useRouter();
   const { address, isConnected, connectWallet } = useWallet();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { 
     streams, 
     isLoading, 
@@ -49,7 +49,7 @@ export default function Dashboard() {
 
   const [timeTicker, setTimeTicker] = useState<number>(Date.now());
   const [error, setError] = useState<string | null>(null);
-  const [analyticsSnapshot, setAnalyticsSnapshot] = useState(getAnalyticsSnapshot());
+  const [analyticsSnapshot, setAnalyticsSnapshot] = useState(getAnalyticsSnapshot(user?.id));
 
   // Form State
   const [title, setTitle] = useState('');
@@ -67,63 +67,31 @@ export default function Dashboard() {
   const [rampSuccess, setRampSuccess] = useState(false);
   const [rampLoading, setRampLoading] = useState(false);
 
-  const defaultMockStreams: StreamData[] = [
-    {
-      id: 991,
-      employer: address || 'GB_EMPLOYER_DEMO_ADDRESS',
-      contractor: 'GBA24HODL...',
-      token: 'USDC (Stellar)',
-      amount: 1500,
-      startTime: Math.floor(Date.now() / 1000) - 3600 * 12, // 12 hours ago
-      endTime: Math.floor(Date.now() / 1000) + 3600 * 12,   // 12 hours from now
-      withdrawnAmount: 400,
-      status: 1, // Active
-      title: 'Q3 Product Dev Stream',
-      lastPausedTime: 0,
-      totalPausedDuration: 0,
-    },
-    {
-      id: 992,
-      employer: 'GB_EMPLOYER_DEMO_ADDRESS',
-      contractor: address || 'GB_CONTRACTOR_DEMO_ADDRESS',
-      token: 'XLM (Native)',
-      amount: 500,
-      startTime: Math.floor(Date.now() / 1000) - 3600 * 48,
-      endTime: Math.floor(Date.now() / 1000) - 3600 * 24,
-      withdrawnAmount: 500,
-      status: 2, // Completed
-      title: 'Design Audit Stream',
-      lastPausedTime: 0,
-      totalPausedDuration: 0,
-    }
-  ];
-
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace('/auth');
     }
   }, [isAuthenticated, router]);
 
-  // Set up ticker to update streaming calculations every second
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeTicker(Date.now());
-      setAnalyticsSnapshot(getAnalyticsSnapshot());
+      setAnalyticsSnapshot(getAnalyticsSnapshot(user?.id));
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   const calculateLiveEarned = (stream: StreamData, nowMs: number) => {
     if (stream.status === 0) return 0;
     if (stream.status === 2) return stream.amount;
-    
+
     const nowSecs = Math.floor(nowMs / 1000);
     const durationSec = stream.endTime - stream.startTime;
     if (durationSec <= 0) return stream.amount;
 
-    const calculationTime = 
-      stream.status === 3 || stream.status === 4 
-        ? stream.lastPausedTime 
+    const calculationTime =
+      stream.status === 3 || stream.status === 4
+        ? stream.lastPausedTime
         : nowSecs;
 
     const elapsed = calculationTime - stream.startTime - stream.totalPausedDuration;
@@ -133,12 +101,7 @@ export default function Dashboard() {
     return (stream.amount * elapsed) / durationSec;
   };
 
-  const getActiveStreams = (): StreamData[] => {
-    if (!isConnected || streams.length === 0) {
-      return defaultMockStreams;
-    }
-    return streams;
-  };
+  const getActiveStreams = (): StreamData[] => streams;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,7 +207,7 @@ export default function Dashboard() {
               Real-time Wage Streaming MVP
             </h2>
             <p className="text-muted-foreground text-sm font-light leading-relaxed">
-              Connect your Freighter or other Stellar wallet to deploy streams. You can browse and interact with mock streams below to test the linear second-by-second streaming widget without connecting.
+              Connect your Freighter or other Stellar wallet to deploy streams and view wage data linked to your account.
             </p>
           </div>
           <button
@@ -272,7 +235,7 @@ export default function Dashboard() {
           <span className="text-xs text-muted-foreground uppercase font-semibold">My Loyalty Points</span>
           <div className="text-2xl font-extrabold text-white mt-2 flex items-center gap-1.5">
             <Award className="h-6 w-6 text-accent" />
-            <span>{isConnected ? points : 124} LP</span>
+            <span>{isConnected ? points : 0} LP</span>
           </div>
         </div>
 
@@ -433,14 +396,24 @@ export default function Dashboard() {
           </h3>
 
           <div className="space-y-6">
-            {getActiveStreams().map((stream) => {
+            {getActiveStreams().length === 0 ? (
+              <div className="bg-card border border-border rounded-[2rem] p-10 text-center space-y-3">
+                <HelpCircle className="h-8 w-8 text-zinc-600 mx-auto" />
+                <p className="text-sm text-muted-foreground">
+                  {isConnected
+                    ? 'No wage streams linked to your wallet yet. Create one to get started.'
+                    : 'Connect your wallet to view streams tied to your account.'}
+                </p>
+              </div>
+            ) : (
+            getActiveStreams().map((stream) => {
               const liveEarned = calculateLiveEarned(stream, timeTicker);
               const progress = stream.amount > 0 ? (liveEarned / stream.amount) * 100 : 0;
               const withdrawable = Math.max(0, liveEarned - stream.withdrawnAmount);
 
               // Role checks
-              const isEmployer = address ? stream.employer.toLowerCase() === address.toLowerCase() : true;
-              const isContractor = address ? stream.contractor.toLowerCase() === address.toLowerCase() : true;
+              const isEmployer = address ? stream.employer.toLowerCase() === address.toLowerCase() : false;
+              const isContractor = address ? stream.contractor.toLowerCase() === address.toLowerCase() : false;
 
               return (
                 <div 
@@ -568,7 +541,8 @@ export default function Dashboard() {
                   </div>
                 </div>
               );
-            })}
+            })
+            )}
           </div>
         </div>
       </div>
