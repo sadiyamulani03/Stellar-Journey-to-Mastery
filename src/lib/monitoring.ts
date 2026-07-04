@@ -15,6 +15,7 @@ export interface AnalyticsSnapshot {
 }
 
 const STORAGE_KEY = 'payloyal_analytics';
+const ANONYMOUS_SCOPE = 'anonymous';
 
 const emptyCounts = (): Record<ProductEventName, number> => ({
   wallet_connected: 0,
@@ -28,12 +29,16 @@ const emptyCounts = (): Record<ProductEventName, number> => ({
   dispute_resolved: 0,
 });
 
+function resolveScope(userId?: string | null): string {
+  return userId ?? ANONYMOUS_SCOPE;
+}
+
 function readRecords(userId?: string | null): ProductEventRecord[] {
-  if (typeof window === 'undefined' || !userId) {
+  if (typeof window === 'undefined') {
     return [];
   }
 
-  return readScopedJson<ProductEventRecord[]>(STORAGE_KEY, userId, []);
+  return readScopedJson<ProductEventRecord[]>(STORAGE_KEY, resolveScope(userId), []);
 }
 
 export function trackProductEvent(
@@ -41,13 +46,14 @@ export function trackProductEvent(
   payload?: Record<string, unknown>,
   userId?: string | null
 ) {
-  if (typeof window === 'undefined' || !userId) {
+  if (typeof window === 'undefined') {
     return;
   }
 
-  const records = readRecords(userId);
+  const scope = resolveScope(userId);
+  const records = readScopedJson<ProductEventRecord[]>(STORAGE_KEY, scope, []);
   records.push({ event, payload, timestamp: new Date().toISOString() });
-  writeScopedJson(STORAGE_KEY, userId, records.slice(-50));
+  writeScopedJson(STORAGE_KEY, scope, records.slice(-50));
 }
 
 export function getAnalyticsSnapshot(userId?: string | null): AnalyticsSnapshot {
