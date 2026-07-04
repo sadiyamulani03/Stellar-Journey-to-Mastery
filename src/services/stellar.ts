@@ -559,50 +559,18 @@ export const resolveDisputeOnChain = async (
   );
 };
 
-export interface StellarEvent {
-  id: string;
-  contractId: string;
-  type: string;
-  timestamp: string;
-  data: any;
-}
+export type { StellarEvent } from '../lib/stellar-events';
 
 /**
- * Fetch recent contract events for activity feed.
+ * Fetch recent contract events for activity feed via server-side RPC proxy.
  */
-export const fetchRecentEvents = async (): Promise<StellarEvent[]> => {
-  try {
-    const latestLedger = await rpcServer.getLatestLedger();
-    const startLedger = Math.max(1, latestLedger.sequence - 1000);
-
-    const eventsResp = await rpcServer.getEvents({
-      startLedger,
-      filters: [
-        {
-          type: 'contract',
-          contractIds: [PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID],
-        },
-      ],
-    });
-
-    return eventsResp.events.map((evt) => {
-      let decodedData = null;
-      try {
-        decodedData = scValToNative(evt.value);
-      } catch (err) {
-        console.warn('Failed to parse event value:', err);
-      }
-
-      return {
-        id: evt.id,
-        contractId: evt.contractId?.toString() || '',
-        type: evt.topic.length > 1 ? scValToNative(evt.topic[1]) : 'unknown',
-        timestamp: new Date().toLocaleTimeString(),
-        data: decodedData,
-      };
-    }).reverse();
-  } catch (e) {
-    console.warn('Stellar RPC node is currently unreachable. Gracefully falling back to simulation data.', e);
-    return [];
+export const fetchRecentEvents = async (): Promise<import('../lib/stellar-events').StellarEvent[]> => {
+  const response = await fetch('/api/events', { cache: 'no-store' });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(
+      typeof payload?.error === 'string' ? payload.error : 'Failed to load activity feed.'
+    );
   }
+  return response.json();
 };

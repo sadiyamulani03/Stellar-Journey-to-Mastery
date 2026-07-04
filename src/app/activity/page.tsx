@@ -3,13 +3,25 @@
 import React from 'react';
 import { useEventStreaming } from '../../hooks/useEventStreaming';
 import { StellarEvent } from '../../services/stellar';
-import { Activity, PlusCircle, CheckCircle, ArrowRightLeft, XCircle, Settings, HelpCircle, ShieldAlert } from 'lucide-react';
+import { Activity, PlusCircle, CheckCircle, ArrowRightLeft, XCircle, Settings, HelpCircle, ShieldAlert, RefreshCw } from 'lucide-react';
+
+const EVENT_TYPE_ALIASES: Record<string, string> = {
+  rsld: 'resolved',
+  stkd: 'staked',
+  with: 'withdrawn',
+  regd: 'registered',
+};
+
+function normalizeEventType(type: string) {
+  const lower = type.toLowerCase();
+  return EVENT_TYPE_ALIASES[lower] || lower;
+}
 
 export default function ActivityPage() {
-  const { events, isLoading, refetchEvents } = useEventStreaming();
+  const { events, isLoading, isError, error, refetchEvents } = useEventStreaming();
 
   const getEventIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch (normalizeEventType(type)) {
       case 'created':
         return <PlusCircle className="h-5 w-5 text-yellow-400" />;
       case 'funded':
@@ -32,7 +44,8 @@ export default function ActivityPage() {
   };
 
   const formatEventData = (evt: StellarEvent) => {
-    const { type, data } = evt;
+    const { data } = evt;
+    const type = normalizeEventType(evt.type);
     if (!data) return 'Event processed successfully.';
 
     try {
@@ -67,6 +80,11 @@ export default function ActivityPage() {
         return `Dispute raised on Stream #${id}. Escrow locked. Arbiter evaluation active.`;
       }
       if (type === 'resolved') {
+        if (Array.isArray(data) && data[0] === 'DisputeResolved') {
+          const id = data[1]?.toString() || '?';
+          const contractorPayout = data[4] ? (Number(data[4]) / 1e7).toFixed(2) : '0';
+          return `Dispute #${id} resolved via arbiter. Contractor paid ${contractorPayout} XLM.`;
+        }
         const id = data[0]?.toString() || '?';
         const contractorPayout = data[1] ? (Number(data[1]) / 1e7).toFixed(2) : '0';
         const employerRefund = data[2] ? (Number(data[2]) / 1e7).toFixed(2) : '0';
@@ -104,6 +122,19 @@ export default function ActivityPage() {
             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             <span>Connecting to Stellar Soroban Event Stream...</span>
           </div>
+        ) : isError ? (
+          <div className="text-center py-12 text-muted-foreground text-sm flex flex-col items-center gap-3">
+            <ShieldAlert className="h-8 w-8 text-red-400" />
+            <span>{error instanceof Error ? error.message : 'Failed to load activity feed.'}</span>
+            <button
+              type="button"
+              onClick={() => refetchEvents()}
+              className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-border px-4 py-2 rounded-lg text-sm text-white transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </button>
+          </div>
         ) : events.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground text-sm flex flex-col items-center gap-2">
             <HelpCircle className="h-8 w-8 text-zinc-600" />
@@ -121,7 +152,7 @@ export default function ActivityPage() {
                 <div className="space-y-1">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="font-bold text-white text-sm capitalize">
-                      {evt.type} Event
+                      {normalizeEventType(evt.type)} Event
                     </span>
                     <span className="text-xs text-muted-foreground font-light">{evt.timestamp}</span>
                   </div>

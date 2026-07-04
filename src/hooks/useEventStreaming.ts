@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchRecentEvents, StellarEvent } from '../services/stellar';
+import { fetchRecentEvents, type StellarEvent } from '../services/stellar';
 import { useToastStore } from '../store/useToastStore';
 import { useWalletStore } from '../store/useWalletStore';
 
@@ -98,6 +98,8 @@ export function useEventStreaming() {
   return {
     events,
     isLoading: eventsQuery.isLoading,
+    isError: eventsQuery.isError,
+    error: eventsQuery.error,
     refetchEvents: eventsQuery.refetch,
   };
 }
