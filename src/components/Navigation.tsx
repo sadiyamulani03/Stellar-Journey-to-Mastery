@@ -9,7 +9,7 @@ import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as Setti
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { address, balance, network, isConnected, isConnecting, connectionStage, connectWallet, disconnectWallet } = useWallet();
+  const { address, balance, network, isConnected, isConnecting, connectionStage, error, connectWallet, disconnectWallet } = useWallet();
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -93,31 +93,38 @@ export default function Navigation() {
                   </button>
                 </div>
               ) : isAuthenticated ? (
-                <button
-                  onClick={connectWallet}
-                  disabled={isConnecting}
-                  className="bg-accent hover:opacity-90 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
-                >
-                  {isConnecting ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>
-                        {connectionStage === 'detecting'
-                          ? 'Scanning Wallets...'
-                          : connectionStage === 'waiting_signature'
-                          ? 'Wallet Approval...'
-                          : connectionStage === 'verifying'
-                          ? 'Checking Account...'
-                          : 'Connecting...'}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className="h-4 w-4" />
-                      <span>Connect Wallet</span>
-                    </>
+                <div className="relative">
+                  <button
+                    onClick={connectWallet}
+                    disabled={isConnecting}
+                    className="bg-accent hover:opacity-90 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 animate-in fade-in"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        <span>
+                          {connectionStage === 'detecting'
+                            ? 'Scanning Wallets...'
+                            : connectionStage === 'waiting_signature'
+                            ? 'Wallet Approval...'
+                            : connectionStage === 'verifying'
+                            ? 'Checking Account...'
+                            : 'Connecting...'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Wallet className="h-4 w-4" />
+                        <span>Connect Wallet</span>
+                      </>
+                    )}
+                  </button>
+                  {error && (
+                    <div className="absolute right-0 top-full mt-2 bg-red-950/90 backdrop-blur-md border border-red-500/30 text-red-200 text-[10px] px-3 py-1.5 rounded-xl shadow-xl z-50 whitespace-nowrap animate-in slide-in-from-top-2">
+                      {error}
+                    </div>
                   )}
-                </button>
+                </div>
               ) : null}
             </div>
           </div>

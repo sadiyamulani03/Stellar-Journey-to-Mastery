@@ -94,14 +94,39 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       console.error('Wallet connection failed:', err);
       const errMsg = err?.message || String(err);
       let friendlyMsg = 'Failed to connect wallet. Please try again.';
+      
+      const errMsgLower = errMsg.toLowerCase();
       if (
-        errMsg.toLowerCase().includes('closed') || 
-        errMsg.toLowerCase().includes('dismissed') || 
-        errMsg.toLowerCase().includes('rejected') ||
-        errMsg.toLowerCase().includes('cancel')
+        errMsgLower.includes('closed') || 
+        errMsgLower.includes('dismissed') || 
+        errMsgLower.includes('cancel')
       ) {
         friendlyMsg = 'Wallet connection cancelled.';
+      } else if (
+        errMsgLower.includes('install') || 
+        errMsgLower.includes('not found') || 
+        errMsgLower.includes('not_found')
+      ) {
+        friendlyMsg = 'Wallet not found.';
+      } else if (
+        errMsgLower.includes('network') || 
+        errMsgLower.includes('passphrase') || 
+        errMsgLower.includes('network mismatch')
+      ) {
+        friendlyMsg = 'Network mismatch.';
+      } else if (
+        errMsgLower.includes('reject') || 
+        errMsgLower.includes('decline')
+      ) {
+        friendlyMsg = 'Transaction rejected.';
+      } else if (
+        errMsgLower.includes('404') || 
+        errMsgLower.includes('not funded') ||
+        errMsgLower.includes('not_found')
+      ) {
+        friendlyMsg = 'Account not funded.';
       }
+      
       set({ 
         error: friendlyMsg, 
         isConnecting: false, 

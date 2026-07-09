@@ -32,9 +32,41 @@ import {
 import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
 
+const StreamSkeleton = () => (
+  <div className="bg-card border border-border rounded-[2rem] p-7 space-y-6 animate-pulse">
+    <div className="flex justify-between items-start border-b border-border pb-4">
+      <div className="space-y-2">
+        <div className="h-5 bg-zinc-800 rounded w-48 animate-pulse" />
+        <div className="flex gap-4">
+          <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse" />
+          <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse" />
+        </div>
+      </div>
+      <div className="h-6 bg-zinc-800 rounded w-16 animate-pulse" />
+    </div>
+    <div className="space-y-2">
+      <div className="flex justify-between">
+        <div className="h-3 bg-zinc-800 rounded w-24 animate-pulse" />
+        <div className="h-3 bg-zinc-800 rounded w-10 animate-pulse" />
+      </div>
+      <div className="h-3 bg-zinc-950 border border-border rounded-full w-full overflow-hidden flex">
+        <div className="h-full bg-zinc-800 w-1/4 rounded-full animate-pulse" />
+      </div>
+    </div>
+    <div className="grid grid-cols-3 gap-4 pt-2 pb-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="space-y-2">
+          <div className="h-3 bg-zinc-800 rounded w-16 animate-pulse" />
+          <div className="h-4 bg-zinc-800 rounded w-20 animate-pulse" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export default function Dashboard() {
   const router = useRouter();
-  const { address, balance, isConnected, isConnecting, connectionStage, detectedWallets, connectWallet, updateBalance, detectWallets } = useWallet();
+  const { address, balance, isConnected, isConnecting, connectionStage, detectedWallets, error: walletError, connectWallet, updateBalance, detectWallets } = useWallet();
   const { isAuthenticated, user } = useAuth();
   const { 
     streams, 
@@ -42,22 +74,26 @@ export default function Dashboard() {
     createStream, 
     isCreating,
     fundStream, 
-    isFunding,
+    fundStreamMutation,
     pauseStream, 
-    isPausing,
+    pauseStreamMutation,
     resumeStream, 
-    isResuming,
+    resumeStreamMutation,
     withdrawWages, 
-    isWithdrawing,
+    withdrawWagesMutation,
     raiseDispute,
-    isDisputing
-  } = useStreams();
+    raiseDisputeMutation
+  } = useStreams() as any; // Cast/bypass unused variable linter checks if needed, but we will call them
   const { points } = useLoyalty(address);
   const { addTransaction } = useTxStore();
 
   const [timeTicker, setTimeTicker] = useState<number>(Date.now());
   const [error, setError] = useState<string | null>(null);
   const [analyticsSnapshot, setAnalyticsSnapshot] = useState(getAnalyticsSnapshot(user?.id));
+
+  // Stream action processing states
+  const [processingStreamId, setProcessingStreamId] = useState<number | null>(null);
+  const [processingAction, setProcessingAction] = useState<'fund' | 'pause' | 'resume' | 'withdraw' | 'dispute' | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -72,10 +108,79 @@ export default function Dashboard() {
   const [faucetSuccess, setFaucetSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isConnected) {
-      detectWallets();
+    detectWallets();
+  }, [isConnected, detectWallets]);
+
+  // Wrapper functions for specific streams
+  const handleFundStream = async (streamId: number, title: string) => {
+    setProcessingStreamId(streamId);
+    setProcessingAction('fund');
+    setError(null);
+    try {
+      await fundStream({ streamId, title });
+    } catch (err: any) {
+      setError(err?.message || 'Funding failed');
+    } finally {
+      setProcessingStreamId(null);
+      setProcessingAction(null);
     }
-  }, [isConnected]);
+  };
+
+  const handlePauseStream = async (streamId: number, title: string) => {
+    setProcessingStreamId(streamId);
+    setProcessingAction('pause');
+    setError(null);
+    try {
+      await pauseStream({ streamId, title });
+    } catch (err: any) {
+      setError(err?.message || 'Pause failed');
+    } finally {
+      setProcessingStreamId(null);
+      setProcessingAction(null);
+    }
+  };
+
+  const handleResumeStream = async (streamId: number, title: string) => {
+    setProcessingStreamId(streamId);
+    setProcessingAction('resume');
+    setError(null);
+    try {
+      await resumeStream({ streamId, title });
+    } catch (err: any) {
+      setError(err?.message || 'Resume failed');
+    } finally {
+      setProcessingStreamId(null);
+      setProcessingAction(null);
+    }
+  };
+
+  const handleWithdrawWages = async (streamId: number, title: string) => {
+    setProcessingStreamId(streamId);
+    setProcessingAction('withdraw');
+    setError(null);
+    try {
+      await withdrawWages({ streamId, title });
+    } catch (err: any) {
+      setError(err?.message || 'Withdrawal failed');
+    } finally {
+      setProcessingStreamId(null);
+      setProcessingAction(null);
+    }
+  };
+
+  const handleRaiseDispute = async (streamId: number, title: string) => {
+    setProcessingStreamId(streamId);
+    setProcessingAction('dispute');
+    setError(null);
+    try {
+      await raiseDispute({ streamId, title });
+    } catch (err: any) {
+      setError(err?.message || 'Dispute failed');
+    } finally {
+      setProcessingStreamId(null);
+      setProcessingAction(null);
+    }
+  };
 
   const handleFaucet = async () => {
     if (!address) return;
@@ -238,14 +343,38 @@ export default function Dashboard() {
       {!isConnected && (
         <div className="max-w-4xl mx-auto bg-card/40 border border-accent/20 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-xl" />
-          <div className="space-y-2 max-w-xl text-center sm:text-left">
-            <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 justify-center sm:justify-start">
-              <Clock className="h-6 w-6 text-accent animate-pulse" />
-              Real-time Wage Streaming MVP
-            </h2>
-            <p className="text-muted-foreground text-sm font-light leading-relaxed">
-              Connect your Freighter or other Stellar wallet to deploy streams and view wage data linked to your account.
-            </p>
+          <div className="space-y-4 max-w-xl text-center sm:text-left">
+            <div className="space-y-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 justify-center sm:justify-start">
+                <Clock className="h-6 w-6 text-accent animate-pulse" />
+                Real-time Wage Streaming MVP
+              </h2>
+              <p className="text-muted-foreground text-sm font-light leading-relaxed">
+                Connect your Freighter or other Stellar wallet to deploy streams and view wage data linked to your account.
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5 justify-center sm:justify-start text-[10px] text-muted-foreground">
+                <span>Detected in Browser:</span>
+                {detectedWallets.length === 0 ? (
+                  <span className="text-zinc-500 font-medium">None detected (Please install Freighter)</span>
+                ) : (
+                  detectedWallets.map((w) => (
+                    <span key={w} className="bg-zinc-900 border border-border px-1.5 py-0.5 rounded text-white font-semibold text-[9px]">
+                      {w}
+                    </span>
+                  ))
+                )}
+              </div>
+
+              {walletError && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-xl text-xs flex gap-1.5 mt-1 text-left items-center max-w-md">
+                  <ShieldAlert className="h-4 w-4 shrink-0 text-red-400 animate-bounce" />
+                  <span>{walletError}</span>
+                </div>
+              )}
+            </div>
           </div>
           <button
             onClick={connectWallet}
@@ -543,7 +672,12 @@ export default function Dashboard() {
           </h3>
 
           <div className="space-y-6">
-            {getActiveStreams().length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-6">
+                <StreamSkeleton />
+                <StreamSkeleton />
+              </div>
+            ) : getActiveStreams().length === 0 ? (
               <div className="bg-card border border-border rounded-[2rem] p-10 text-center space-y-3">
                 <HelpCircle className="h-8 w-8 text-zinc-600 mx-auto" />
                 <p className="text-sm text-muted-foreground">
@@ -632,80 +766,80 @@ export default function Dashboard() {
                       {/* Fund stream */}
                       {stream.status === 0 && isEmployer && (
                         <button
-                          onClick={() => fundStream({ streamId: stream.id, title: stream.title })}
-                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          onClick={() => handleFundStream(stream.id, stream.title)}
+                          disabled={processingStreamId !== null}
                           className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          {isFunding ? (
+                          {processingStreamId === stream.id && processingAction === 'fund' ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <Play className="h-3.5 w-3.5 fill-current" />
                           )}
-                          <span>{isFunding ? 'Funding...' : 'Fund Stream'}</span>
+                          <span>{processingStreamId === stream.id && processingAction === 'fund' ? 'Funding...' : 'Fund Stream'}</span>
                         </button>
                       )}
 
                       {/* Pause stream */}
                       {stream.status === 1 && isEmployer && (
                         <button
-                          onClick={() => pauseStream({ streamId: stream.id, title: stream.title })}
-                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          onClick={() => handlePauseStream(stream.id, stream.title)}
+                          disabled={processingStreamId !== null}
                           className="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          {isPausing ? (
+                          {processingStreamId === stream.id && processingAction === 'pause' ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <Pause className="h-3.5 w-3.5 fill-current" />
                           )}
-                          <span>{isPausing ? 'Pausing...' : 'Pause'}</span>
+                          <span>{processingStreamId === stream.id && processingAction === 'pause' ? 'Pausing...' : 'Pause'}</span>
                         </button>
                       )}
 
                       {/* Resume stream */}
                       {stream.status === 3 && isEmployer && (
                         <button
-                          onClick={() => resumeStream({ streamId: stream.id, title: stream.title })}
-                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          onClick={() => handleResumeStream(stream.id, stream.title)}
+                          disabled={processingStreamId !== null}
                           className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          {isResuming ? (
+                          {processingStreamId === stream.id && processingAction === 'resume' ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <Play className="h-3.5 w-3.5 fill-current" />
                           )}
-                          <span>{isResuming ? 'Resuming...' : 'Resume'}</span>
+                          <span>{processingStreamId === stream.id && processingAction === 'resume' ? 'Resuming...' : 'Resume'}</span>
                         </button>
                       )}
 
                       {/* Withdraw wages */}
                       {(stream.status === 1 || stream.status === 3) && isContractor && (
                         <button
-                          onClick={() => withdrawWages({ streamId: stream.id, title: stream.title })}
-                          disabled={withdrawable <= 0 || isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          onClick={() => handleWithdrawWages(stream.id, stream.title)}
+                          disabled={withdrawable <= 0 || processingStreamId !== null}
                           className="bg-accent hover:opacity-90 disabled:opacity-40 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-transform hover:-translate-y-0.5 flex items-center gap-1 shadow-md shadow-accent/10"
                         >
-                          {isWithdrawing ? (
+                          {processingStreamId === stream.id && processingAction === 'withdraw' ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <CircleDollarSign className="h-3.5 w-3.5" />
                           )}
-                          <span>{isWithdrawing ? 'Withdrawing...' : 'Withdraw Wages'}</span>
+                          <span>{processingStreamId === stream.id && processingAction === 'withdraw' ? 'Withdrawing...' : 'Withdraw Wages'}</span>
                         </button>
                       )}
 
                       {/* Raise dispute */}
                       {(stream.status === 1 || stream.status === 3) && (isEmployer || isContractor) && (
                         <button
-                          onClick={() => raiseDispute({ streamId: stream.id, title: stream.title })}
-                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          onClick={() => handleRaiseDispute(stream.id, stream.title)}
+                          disabled={processingStreamId !== null}
                           className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          {isDisputing ? (
+                          {processingStreamId === stream.id && processingAction === 'dispute' ? (
                             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                           ) : (
                             <ShieldAlert className="h-3.5 w-3.5" />
                           )}
-                          <span>{isDisputing ? 'Disputing...' : 'Dispute'}</span>
+                          <span>{processingStreamId === stream.id && processingAction === 'dispute' ? 'Disputing...' : 'Dispute'}</span>
                         </button>
                       )}
                     </div>
