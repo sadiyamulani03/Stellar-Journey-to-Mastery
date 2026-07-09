@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '../hooks/useWallet';
 import { useAuth } from '../hooks/useAuth';
-import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield } from 'lucide-react';
+import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield, RefreshCw } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { address, balance, network, isConnected, isConnecting, connectWallet, disconnectWallet } = useWallet();
+  const { address, balance, network, isConnected, isConnecting, connectionStage, connectWallet, disconnectWallet } = useWallet();
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -80,7 +80,7 @@ export default function Navigation() {
                 </Link>
               )}
 
-              {isConnected && address && (
+              {isConnected && address ? (
                 <div className="flex items-center gap-2">
                   <div className="bg-zinc-900 border border-border px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">{balance} XLM</span>
@@ -92,7 +92,33 @@ export default function Navigation() {
                     {formatAddress(address)}
                   </button>
                 </div>
-              )}
+              ) : isAuthenticated ? (
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="bg-accent hover:opacity-90 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                >
+                  {isConnecting ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>
+                        {connectionStage === 'detecting'
+                          ? 'Scanning Wallets...'
+                          : connectionStage === 'waiting_signature'
+                          ? 'Wallet Approval...'
+                          : connectionStage === 'verifying'
+                          ? 'Checking Account...'
+                          : 'Connecting...'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="h-4 w-4" />
+                      <span>Connect Wallet</span>
+                    </>
+                  )}
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -103,10 +129,27 @@ export default function Navigation() {
               disabled={isConnecting}
               className="bg-accent/15 text-accent border border-accent/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
             >
-              <Wallet className="h-3.5 w-3.5" />
-              <span>
-                {isConnecting ? '...' : isConnected && address ? formatAddress(address) : 'Connect'}
-              </span>
+              {isConnecting ? (
+                <>
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                  <span>
+                    {connectionStage === 'detecting'
+                      ? 'Scanning...'
+                      : connectionStage === 'waiting_signature'
+                      ? 'Approving...'
+                      : connectionStage === 'verifying'
+                      ? 'Verifying...'
+                      : 'Connecting...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Wallet className="h-3.5 w-3.5" />
+                  <span>
+                    {isConnected && address ? formatAddress(address) : 'Connect'}
+                  </span>
+                </>
+              )}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

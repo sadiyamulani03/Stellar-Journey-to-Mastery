@@ -558,42 +558,87 @@ The frontend service layer already provides default contract IDs for the current
 
 ---
 
+## 🚀 Deployment and Demo Notes
+
+- The app is structured for Stellar Testnet deployment
+- Contract addresses should be updated in the environment configuration before a public demo
+- The dashboard is designed to support a clean live walkthrough for judges, reviewers, and evaluators
+
+---
+
 ## 📸 Screenshots:
 - Product UI screenshot:-
-- Mobile responsive view
-- Analytics or monitoring view
-- Demo transaction or activity feed screenshot
+  <img width="1890" height="873" alt="Screenshot 2026-07-02 102455" src="https://github.com/user-attachments/assets/8f34a0dd-5c84-4cb6-9df4-8c29a409650a" />
 
+- Mobile responsive view:-
+
+  <img width="610" height="1356" alt="mr" src="https://github.com/user-attachments/assets/f71a3501-3c98-4d06-ae7a-fd0f9fb79c96" />
+
+- Analytics or monitoring view:-
+
+  <img width="1887" height="875" alt="Screenshot 2026-07-04 152749" src="https://github.com/user-attachments/assets/fc6ad72a-7214-453e-a3f5-2fe5b919bc7c" />
 ---
 
-## 🎥 Demo Video:
-
+## 🎥 Demo Video: https://drive.google.com/file/d/14SMIkWTHfojKK7sAuM9PrXXPOUQEjNML/view?usp=sharing
 ---
 
-## 🔗 Live Demo:
-
-
-
+## 🔗 Live Demo:  https://stellar-journey-to-mastery.vercel.app/auth
 ---
+## 🙏 Acknowledgements
 
-## ✅ Submission Checklist
+- Stellar Development Foundation
+- Stellar Wallets Kit
+- Soroban community tooling
+- Open-source contributors and the broader Stellar ecosystem
+---
+## User Testing & Feedback
 
-Ensure the project meets all requested submission requirements before sharing it.
+We onboarded 12 test users to interact with core wallet and streaming features.
 
-### Required
+**Feedback form:** https://docs.google.com/forms/d/e/1FAIpQLSd0n5ZvYKCw1-1SxIBfwp_Gsw2ghN65797w8ke72dTsBFXP-Q/viewform
 
-- Public GitHub repository
-- Complete documentation in the repository
-- Minimum 15+ meaningful commits
-- Live demo link
-- Contract deployment address
-- Screenshots showing:
-  - Product UI
-  - Mobile responsive design
-  - Analytics or monitoring setup
-- Demo video link
-- Proof of 10+ user wallet interactions
-- Basic user feedback summary
+
+**Raw responses:** https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342
+
+### Feedback Summary
+* 10 users successfully connected a Stellar wallet
+* 10 created at least one payment stream
+* Average overall rating: 4.6/5
+* Average ease-of-use: Easy
+* Common praise: Clean, intuitive UI
+* Common feedback: Add loading states during wallet connection and transactions
+* Other feedback: Improve error messages, auto-detect installed wallets, fix wallet state fetching bug
+
+
+## 🔵 Level 5 — Blue Belt: Product Scaling, Growth & User Feedback Iteration
+
+In this level, our focus shifted from core contract functionality to scaling payLoyal based on real-world user feedback. We collected feedback from over 50 testnet users, implemented responsive UX/UI enhancements, and drafted professional presentation layouts.
+
+### 📈 User Growth & Onboarding Proof
+- **Onboarded Users:** 50+ active testnet users with real transaction activity on Stellar Testnet.
+- **Exported Feedback Registry:** [feedback](https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342) containing all 50 user responses and wallet details.
+- **User Feedback Summary:**
+  - **Overall Experience Rating:** Average 4.7/5 stars.
+  - **Key User Feedback Points & Action Taken:**
+    1. *Vishvajit B. & Anjali P.*: Suggested adding loading skeletons/spinners when connecting rather than just disabling buttons.
+       - **Action Taken:** Updated connect buttons to display active spinners and connection text stages.
+    2. *Bhavesh P.*: Noted that the app froze when waiting for wallet signatures.
+       - **Action Taken:** Created a connection stage state engine in `useWalletStore` cycling through `idle`, `detecting`, `waiting_signature`, and `verifying` with status labels.
+    3. *Sheetal G.*: Requested friendly error mapping instead of generic "Failed" messages.
+       - **Action Taken:** Implemented `getFriendlyErrorMessage` in `src/lib/error-mapper.ts` mapping wallet rejects, timeouts, and unfunded accounts to plain English.
+    4. *Sajid S.*: Recommended browser wallet detection and showing transaction processing states.
+       - **Action Taken:** Implemented browser checks for Freighter/Albedo/xBull and added dynamic spinner buttons for stream funding/pausing.
+    5. *Vaibhavi A. & Tanmay M.*: Suggested onboarding improvements to help users understand streams and wallet state.
+       - **Action Taken:** Added an Onboarding Checklist guide panel and a built-in Faucet (Friendbot) button to fund accounts in one click.
+
+### 📁 Presentation & Demo Assets 
+- **Demo Video Link:** *[]*
+- **Pitch Deck Link:** *[]*
+
+### 🔮 Future Evolution & Roadmap
+Based on user feedback, the next phase of payLoyal will focus on:
+1. **SEP-24 Fiat On-Ramps:** Integrating Stellar Anchors directly so employers can deposit USDC/XLM using bank transfers/cards directly from the dashboard.
+2. **Hana and xBull Integrations:** Extending wallet-native listeners to automatically sync connection states for mobile-first wallets.
 
 ---
 

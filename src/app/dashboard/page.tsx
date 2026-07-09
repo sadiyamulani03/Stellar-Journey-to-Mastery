@@ -25,24 +25,32 @@ import {
   X,
   CreditCard,
   Building,
-  Award
+  Award,
+  RefreshCw,
+  Zap
 } from 'lucide-react';
 import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { address, isConnected, connectWallet } = useWallet();
+  const { address, balance, isConnected, isConnecting, connectionStage, detectedWallets, connectWallet, updateBalance, detectWallets } = useWallet();
   const { isAuthenticated, user } = useAuth();
   const { 
     streams, 
     isLoading, 
     createStream, 
+    isCreating,
     fundStream, 
+    isFunding,
     pauseStream, 
+    isPausing,
     resumeStream, 
+    isResuming,
     withdrawWages, 
-    raiseDispute 
+    isWithdrawing,
+    raiseDispute,
+    isDisputing
   } = useStreams();
   const { points } = useLoyalty(address);
   const { addTransaction } = useTxStore();
@@ -58,6 +66,35 @@ export default function Dashboard() {
   const [duration, setDuration] = useState('86400'); // Default: 1 Day
   const [customDuration, setCustomDuration] = useState('');
   const [tokenAddress, setTokenAddress] = useState('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'); // default Testnet token or XLM
+
+  // Faucet & Wallet detection
+  const [faucetLoading, setFaucetLoading] = useState(false);
+  const [faucetSuccess, setFaucetSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isConnected) {
+      detectWallets();
+    }
+  }, [isConnected]);
+
+  const handleFaucet = async () => {
+    if (!address) return;
+    setFaucetLoading(true);
+    setFaucetSuccess(null);
+    try {
+      const res = await fetch(`https://friendbot.stellar.org/?addr=${address}`);
+      if (!res.ok) {
+        throw new Error('Friendbot funding request failed. Please try again.');
+      }
+      setFaucetSuccess('Wallet successfully funded with 10,000 Testnet XLM!');
+      await updateBalance();
+      setTimeout(() => setFaucetSuccess(null), 5000);
+    } catch (err: any) {
+      setError(err.message || 'Friendbot failed.');
+    } finally {
+      setFaucetLoading(false);
+    }
+  };
 
   // Cash Ramp State
   const [rampModalOpen, setRampModalOpen] = useState(false);
@@ -212,11 +249,116 @@ export default function Dashboard() {
           </div>
           <button
             onClick={connectWallet}
-            className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-semibold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shrink-0 transition-transform hover:-translate-y-0.5"
+            disabled={isConnecting}
+            className="w-full sm:w-auto bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shrink-0 transition-transform hover:-translate-y-0.5"
           >
-            <Wallet className="h-4 w-4" />
-            <span>Connect Wallet</span>
+            {isConnecting ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wallet className="h-4 w-4" />
+            )}
+            <span>
+              {isConnecting 
+                ? (connectionStage === 'detecting' 
+                    ? 'Scanning Wallets...' 
+                    : connectionStage === 'waiting_signature' 
+                    ? 'Check Extension...' 
+                    : 'Verifying...') 
+                : 'Connect Wallet'}
+            </span>
           </button>
+        </div>
+      )}
+
+      {/* Onboarding and Faucet Panel */}
+      {isConnected && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 bg-card border border-border/80 p-8 rounded-[2rem] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl -mr-10 -mt-10" />
+          
+          {/* Onboarding Checklist */}
+          <div className="md:col-span-2 space-y-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Award className="h-5 w-5 text-accent animate-pulse" />
+              Onboarding Checklist & Progress
+            </h3>
+            <p className="text-xs text-muted-foreground font-light leading-relaxed">
+              Complete these steps to set up payLoyal wage streaming on the Stellar Testnet.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {[
+                { label: 'Connect browser wallet', done: isConnected },
+                { label: 'Request Testnet XLM', done: parseFloat(balance) > 0 },
+                { label: 'Create a Wage Stream', done: streams.length > 0 },
+                { label: 'Fund and start wages', done: streams.some(s => s.status > 0) },
+              ].map((step, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 bg-zinc-950/60 border border-border/60 px-4 py-3 rounded-xl">
+                  {step.done ? (
+                    <div className="bg-green-500/10 border border-green-500/30 p-1 rounded-full text-green-400">
+                      <Check className="h-3.5 w-3.5 font-bold" />
+                    </div>
+                  ) : (
+                    <div className="h-5.5 w-5.5 rounded-full border-2 border-dashed border-zinc-700 flex items-center justify-center text-zinc-500 text-[10px] font-bold">
+                      {idx + 1}
+                    </div>
+                  )}
+                  <span className={`text-xs font-semibold ${step.done ? 'text-zinc-400 line-through' : 'text-white'}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Faucet & detected wallets */}
+          <div className="md:col-span-1 border-t md:border-t-0 md:border-l border-border/80 pt-6 md:pt-0 md:pl-8 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">Wallet Tools</span>
+              <h4 className="font-bold text-white text-sm">Need Testnet Gas?</h4>
+              <p className="text-xs text-muted-foreground font-light leading-relaxed">
+                Fund your connected address with 10,000 test tokens in one click.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              {faucetSuccess && (
+                <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-2.5 rounded-lg text-xs leading-relaxed">
+                  {faucetSuccess}
+                </div>
+              )}
+              
+              <button
+                onClick={handleFaucet}
+                disabled={faucetLoading}
+                className="w-full bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
+              >
+                {faucetLoading ? (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    <span>Funding Wallet...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-3.5 w-3.5" />
+                    <span>Request Friendbot XLM</span>
+                  </>
+                )}
+              </button>
+              
+              <div className="flex items-center gap-1.5 justify-start text-[10px] text-muted-foreground">
+                <span>Detected in Browser:</span>
+                {detectedWallets.length === 0 ? (
+                  <span className="text-zinc-600 font-medium">Scanning...</span>
+                ) : (
+                  detectedWallets.map((w) => (
+                    <span key={w} className="bg-zinc-900 border border-border px-1.5 py-0.5 rounded text-white font-semibold text-[9px]">
+                      {w}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -380,10 +522,15 @@ export default function Dashboard() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
+              disabled={isCreating}
+              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
             >
-              <Plus className="h-4 w-4" />
-              <span>Create Stream</span>
+              {isCreating ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              <span>{isCreating ? 'Creating Stream...' : 'Create Stream'}</span>
             </button>
           </form>
         </div>
@@ -486,10 +633,15 @@ export default function Dashboard() {
                       {stream.status === 0 && isEmployer && (
                         <button
                           onClick={() => fundStream({ streamId: stream.id, title: stream.title })}
-                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          <Play className="h-3.5 w-3.5 fill-current" />
-                          <span>Fund Stream</span>
+                          {isFunding ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5 fill-current" />
+                          )}
+                          <span>{isFunding ? 'Funding...' : 'Fund Stream'}</span>
                         </button>
                       )}
 
@@ -497,10 +649,15 @@ export default function Dashboard() {
                       {stream.status === 1 && isEmployer && (
                         <button
                           onClick={() => pauseStream({ streamId: stream.id, title: stream.title })}
-                          className="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          className="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          <Pause className="h-3.5 w-3.5 fill-current" />
-                          <span>Pause</span>
+                          {isPausing ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Pause className="h-3.5 w-3.5 fill-current" />
+                          )}
+                          <span>{isPausing ? 'Pausing...' : 'Pause'}</span>
                         </button>
                       )}
 
@@ -508,10 +665,15 @@ export default function Dashboard() {
                       {stream.status === 3 && isEmployer && (
                         <button
                           onClick={() => resumeStream({ streamId: stream.id, title: stream.title })}
-                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          <Play className="h-3.5 w-3.5 fill-current" />
-                          <span>Resume</span>
+                          {isResuming ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5 fill-current" />
+                          )}
+                          <span>{isResuming ? 'Resuming...' : 'Resume'}</span>
                         </button>
                       )}
 
@@ -519,11 +681,15 @@ export default function Dashboard() {
                       {(stream.status === 1 || stream.status === 3) && isContractor && (
                         <button
                           onClick={() => withdrawWages({ streamId: stream.id, title: stream.title })}
-                          disabled={withdrawable <= 0}
-                          className="bg-accent hover:opacity-90 disabled:opacity-40 disabled:pointer-events-none text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-transform hover:-translate-y-0.5 flex items-center gap-1 shadow-md shadow-accent/10"
+                          disabled={withdrawable <= 0 || isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          className="bg-accent hover:opacity-90 disabled:opacity-40 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-transform hover:-translate-y-0.5 flex items-center gap-1 shadow-md shadow-accent/10"
                         >
-                          <CircleDollarSign className="h-3.5 w-3.5" />
-                          <span>Withdraw Wages</span>
+                          {isWithdrawing ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <CircleDollarSign className="h-3.5 w-3.5" />
+                          )}
+                          <span>{isWithdrawing ? 'Withdrawing...' : 'Withdraw Wages'}</span>
                         </button>
                       )}
 
@@ -531,10 +697,15 @@ export default function Dashboard() {
                       {(stream.status === 1 || stream.status === 3) && (isEmployer || isContractor) && (
                         <button
                           onClick={() => raiseDispute({ streamId: stream.id, title: stream.title })}
-                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1"
+                          disabled={isFunding || isPausing || isResuming || isWithdrawing || isDisputing}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 disabled:opacity-40"
                         >
-                          <ShieldAlert className="h-3.5 w-3.5" />
-                          <span>Dispute</span>
+                          {isDisputing ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                          )}
+                          <span>{isDisputing ? 'Disputing...' : 'Dispute'}</span>
                         </button>
                       )}
                     </div>

@@ -321,9 +321,14 @@ export function useStreams() {
     createStream: createStreamMutation.mutateAsync,
     isCreating: createStreamMutation.isPending,
     fundStream: fundStreamMutation.mutateAsync,
+    isFunding: fundStreamMutation.isPending,
     pauseStream: pauseStreamMutation.mutateAsync,
+    isPausing: pauseStreamMutation.isPending,
     resumeStream: resumeStreamMutation.mutateAsync,
+    isResuming: resumeStreamMutation.isPending,
     withdrawWages: withdrawWagesMutation.mutateAsync,
+    isWithdrawing: withdrawWagesMutation.isPending,
     raiseDispute: raiseDisputeMutation.mutateAsync,
+    isDisputing: raiseDisputeMutation.isPending,
   };
 }

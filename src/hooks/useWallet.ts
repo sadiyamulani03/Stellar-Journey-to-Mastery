@@ -62,11 +62,14 @@ export function useWallet() {
     network: store.network,
     isConnected: store.isConnected,
     isConnecting: store.isConnecting,
+    connectionStage: store.connectionStage,
+    detectedWallets: store.detectedWallets,
     error: store.error,
     kit: store.kit,
     connectWallet: () => store.connectWallet(userId ?? undefined),
     disconnectWallet: () => store.disconnectWallet(userId ?? undefined),
     setNetwork: store.setNetwork,
     updateBalance: store.updateBalance,
+    detectWallets: store.detectWallets,
   };
 }

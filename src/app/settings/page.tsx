@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import * as freighterApi from '@stellar/freighter-api';
 import { useWallet } from '../../hooks/useWallet';
 import { Settings as SettingsIcon, Shield, Server, Wallet, Key, Cpu } from 'lucide-react';
 import { PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID } from '../../services/stellar';

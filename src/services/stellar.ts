@@ -1,5 +1,6 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { useTxStore } from '../store/useTxStore';
+import { getFriendlyErrorMessage } from '../lib/error-mapper';
 
 const { rpc, Contract, nativeToScVal, scValToNative, TransactionBuilder, Account, Networks: SDKNetworks } = StellarSdk;
 
@@ -271,7 +272,18 @@ const signAndSubmitTransaction = async (
 ): Promise<string> => {
   const txStore = useTxStore.getState();
   try {
-    const account = await horizonServer.loadAccount(publicKey);
+    let account;
+    try {
+      account = await horizonServer.loadAccount(publicKey);
+    } catch (err: any) {
+      if (err?.response?.status === 404 || String(err).includes('404') || String(err).includes('not found') || String(err).includes('not_found')) {
+        const unfundedErr = new Error('Your Stellar wallet is not funded on Testnet yet. Please click the Faucet button on the dashboard to fund it.');
+        (unfundedErr as any).code = 'ACCOUNT_NOT_FUNDED';
+        throw unfundedErr;
+      }
+      throw err;
+    }
+
     const contract = new Contract(contractId);
 
     const rawTx = new TransactionBuilder(account, {
@@ -316,18 +328,10 @@ const signAndSubmitTransaction = async (
     throw new Error('Transaction execution timed out.');
   } catch (err: any) {
     console.error(`Error executing ${functionName} on contract ${contractId}:`, err);
-    const errMsg = err?.message || String(err);
-    if (errMsg.includes('reject') || errMsg.includes('cancel') || errMsg.includes('decline')) {
-      const rejectErr = new Error('Transaction was rejected by user.');
-      (rejectErr as any).code = 'USER_REJECTED';
-      throw rejectErr;
-    }
-    if (errMsg.includes('insufficient') || errMsg.includes('underfunded')) {
-      const insErr = new Error('Insufficient balance to perform transaction.');
-      (insErr as any).code = 'INSUFFICIENT_BALANCE';
-      throw insErr;
-    }
-    throw err;
+    const friendlyMessage = getFriendlyErrorMessage(err);
+    const mappedErr = new Error(friendlyMessage);
+    (mappedErr as any).code = (err as any).code || 'CONTRACT_CALL_FAILED';
+    throw mappedErr;
   }
 };
 
