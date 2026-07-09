@@ -38,7 +38,7 @@ interface WalletState {
   detectedWallets: string[];
   error: string | null;
   kit: any;
-  connectWallet: (userId?: string) => Promise<string | null>;
+  connectWallet: (userId?: string, silent?: boolean) => Promise<string | null>;
   disconnectWallet: (userId?: string) => Promise<void>;
   setNetwork: (network: string) => void;
   updateBalance: () => Promise<void>;
@@ -66,7 +66,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     set({ detectedWallets: detected });
   },
 
-  connectWallet: async (userId?: string) => {
+  connectWallet: async (userId?: string, silent = false) => {
     if (typeof window === 'undefined' || !StellarWalletsKit || !kitReady) {
       set({ error: 'Wallet kit is not available on server.', connectionStage: 'idle' });
       return null;
@@ -75,12 +75,30 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     // Scan browser wallets
     get().detectWallets();
     
+    const savedWalletType = typeof window !== 'undefined' ? localStorage.getItem('payloyal_wallet_type') : null;
+    if (silent && !savedWalletType) {
+      return null;
+    }
+    
     set({ isConnecting: true, connectionStage: 'detecting', error: null });
     try {
-      set({ connectionStage: 'waiting_signature' });
-      const { address } = await StellarWalletsKit.authModal();
+      let address = '';
+      if (silent && savedWalletType) {
+        set({ connectionStage: 'verifying' });
+        StellarWalletsKit.setWallet(savedWalletType);
+        const addrObj = await StellarWalletsKit.getAddress();
+        address = addrObj.address;
+      } else {
+        set({ connectionStage: 'waiting_signature' });
+        const res = await StellarWalletsKit.authModal();
+        address = res.address;
+        
+        const walletId = StellarWalletsKit.selectedModule?.id;
+        if (walletId && typeof window !== 'undefined') {
+          localStorage.setItem('payloyal_wallet_type', walletId);
+        }
+      }
       
-      set({ connectionStage: 'verifying' });
       set({
         address,
         isConnected: true,
@@ -92,6 +110,14 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       return address;
     } catch (err: any) {
       console.error('Wallet connection failed:', err);
+      if (silent) {
+        set({ isConnecting: false, isConnected: false, address: null, connectionStage: 'idle' });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('payloyal_wallet_type');
+        }
+        return null;
+      }
+      
       const errMsg = err?.message || String(err);
       let friendlyMsg = 'Failed to connect wallet. Please try again.';
       
@@ -145,6 +171,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       } catch (err) {
         console.warn('Disconnect error:', err);
       }
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('payloyal_wallet_type');
     }
     set({ address: null, isConnected: false, balance: '0.00', connectionStage: 'idle' });
     trackProductEvent('wallet_disconnected', undefined, userId);

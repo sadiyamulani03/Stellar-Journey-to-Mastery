@@ -38,7 +38,7 @@ export function useWallet() {
     const storageKey = scopedStorageKey(WALLET_CONNECTED_KEY, userId);
     const savedConnected = localStorage.getItem(storageKey);
     if (savedConnected === 'true' && !store.isConnected && !store.isConnecting) {
-      store.connectWallet(userId);
+      store.connectWallet(userId, true);
     }
   }, [isAuthenticated, userId]);
 
@@ -66,7 +66,7 @@ export function useWallet() {
     detectedWallets: store.detectedWallets,
     error: store.error,
     kit: store.kit,
-    connectWallet: () => store.connectWallet(userId ?? undefined),
+    connectWallet: () => store.connectWallet(userId ?? undefined, false),
     disconnectWallet: () => store.disconnectWallet(userId ?? undefined),
     setNetwork: store.setNetwork,
     updateBalance: store.updateBalance,

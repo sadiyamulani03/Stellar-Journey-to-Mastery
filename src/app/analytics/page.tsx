@@ -33,16 +33,23 @@ export default function AnalyticsPage() {
   }
 
   // Calculate live stats
-  const cumulativeVolume = streams.reduce((acc, s) => acc + s.amount, 0);
+  const cumulativeVolume = streams.reduce((acc: number, s: any) => acc + s.amount, 0);
   const activeEscrow = streams
-    .filter((s) => s.status === 1 || s.status === 3)
-    .reduce((acc, s) => acc + (s.amount - s.withdrawnAmount), 0);
-  const uniqueContractors = new Set(streams.map((s) => s.contractor.toLowerCase())).size;
-  const loyaltyPointsIssued = streams.reduce((acc, s) => acc + s.withdrawnAmount / 10, 0);
+    .filter((s: any) => s.status === 1 || s.status === 3)
+    .reduce((acc: number, s: any) => acc + (s.amount - s.withdrawnAmount), 0);
+  const uniqueContractors = new Set(streams.map((s: any) => s.contractor.toLowerCase())).size;
+  const loyaltyPointsIssued = streams.reduce((acc: number, s: any) => acc + s.withdrawnAmount / 10, 0);
 
   // Calculate dynamic 6 months for payouts chart
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const months = [];
+  
+  interface MonthBucket {
+    name: string;
+    monthIndex: number;
+    year: number;
+    val: number;
+  }
+  const months: MonthBucket[] = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
@@ -54,7 +61,7 @@ export default function AnalyticsPage() {
     });
   }
 
-  streams.forEach((stream) => {
+  streams.forEach((stream: any) => {
     const date = new Date(stream.startTime * 1000);
     const m = date.getMonth();
     const y = date.getFullYear();

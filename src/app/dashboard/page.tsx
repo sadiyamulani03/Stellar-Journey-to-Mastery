@@ -107,9 +107,80 @@ export default function Dashboard() {
   const [faucetLoading, setFaucetLoading] = useState(false);
   const [faucetSuccess, setFaucetSuccess] = useState<string | null>(null);
 
+  // Saved Workers
+  const [savedWorkers, setSavedWorkers] = useState<Array<{ name: string; address: string }>>([]);
+  const [workerName, setWorkerName] = useState('');
+  const [saveWorkerChecked, setSaveWorkerChecked] = useState(false);
+
+  // Batch withdrawal state
+  const [isWithdrawingAll, setIsWithdrawingAll] = useState(false);
+
   useEffect(() => {
     detectWallets();
   }, [isConnected, detectWallets]);
+
+  // Load saved workers on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const saved = localStorage.getItem(`payloyal_saved_workers_${user.id}`);
+      if (saved) {
+        try {
+          setSavedWorkers(JSON.parse(saved));
+        } catch (e) {
+          console.warn('Failed to parse saved workers:', e);
+        }
+      }
+    }
+  }, [user?.id]);
+
+  // Calculate withdrawable streams count and total amount
+  const getWithdrawableStreamsCount = () => {
+    return streams.filter((s: any) => {
+      const isContractor = address ? s.contractor.toLowerCase() === address.toLowerCase() : false;
+      const liveEarned = calculateLiveEarned(s, timeTicker);
+      const withdrawable = Math.max(0, liveEarned - s.withdrawnAmount);
+      return isContractor && (s.status === 1 || s.status === 3) && withdrawable > 0.0001;
+    }).length;
+  };
+
+  const getTotalWithdrawableAmount = () => {
+    return streams.reduce((acc: number, s: any) => {
+      const isContractor = address ? s.contractor.toLowerCase() === address.toLowerCase() : false;
+      if (!isContractor || (s.status !== 1 && s.status !== 3)) return acc;
+      const liveEarned = calculateLiveEarned(s, timeTicker);
+      const withdrawable = Math.max(0, liveEarned - s.withdrawnAmount);
+      return acc + withdrawable;
+    }, 0);
+  };
+
+  // Withdraw all earnings sequentially
+  const handleWithdrawAll = async () => {
+    const contractorStreams = streams.filter((s: any) => {
+      const isContractor = address ? s.contractor.toLowerCase() === address.toLowerCase() : false;
+      const liveEarned = calculateLiveEarned(s, timeTicker);
+      const withdrawable = Math.max(0, liveEarned - s.withdrawnAmount);
+      return isContractor && (s.status === 1 || s.status === 3) && withdrawable > 0.0001;
+    });
+
+    if (contractorStreams.length === 0) return;
+    
+    setIsWithdrawingAll(true);
+    setError(null);
+    
+    for (const stream of contractorStreams) {
+      setProcessingStreamId(stream.id);
+      setProcessingAction('withdraw');
+      try {
+        await withdrawWages({ streamId: stream.id, title: stream.title });
+      } catch (err: any) {
+        setError(err?.message || `Withdrawal failed for "${stream.title}"`);
+        break;
+      }
+    }
+    setProcessingStreamId(null);
+    setProcessingAction(null);
+    setIsWithdrawingAll(false);
+  };
 
   // Wrapper functions for specific streams
   const handleFundStream = async (streamId: number, title: string) => {
@@ -277,10 +348,22 @@ export default function Dashboard() {
         title,
       });
 
+      // Save worker details to address book if checked
+      if (saveWorkerChecked && contractor && workerName && user?.id) {
+        const isAlreadySaved = savedWorkers.some(w => w.address.toLowerCase() === contractor.toLowerCase());
+        if (!isAlreadySaved) {
+          const updated = [...savedWorkers, { name: workerName, address: contractor }];
+          setSavedWorkers(updated);
+          localStorage.setItem(`payloyal_saved_workers_${user.id}`, JSON.stringify(updated));
+        }
+      }
+
       setTitle('');
       setContractor('');
       setAmount('');
       setCustomDuration('');
+      setWorkerName('');
+      setSaveWorkerChecked(false);
     } catch (err: any) {
       setError(err?.message || 'Transaction execution failed.');
     }
@@ -419,7 +502,7 @@ export default function Dashboard() {
                 { label: 'Connect browser wallet', done: isConnected },
                 { label: 'Request Testnet XLM', done: parseFloat(balance) > 0 },
                 { label: 'Create a Wage Stream', done: streams.length > 0 },
-                { label: 'Fund and start wages', done: streams.some(s => s.status > 0) },
+                { label: 'Fund and start wages', done: streams.some((s: any) => s.status > 0) },
               ].map((step, idx) => (
                 <div key={idx} className="flex items-center gap-2.5 bg-zinc-950/60 border border-border/60 px-4 py-3 rounded-xl">
                   {step.done ? (
@@ -497,7 +580,7 @@ export default function Dashboard() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
           <span className="text-xs text-muted-foreground uppercase font-semibold">Active Streams</span>
           <div className="text-2xl font-extrabold text-white mt-2">
-            {getActiveStreams().filter(s => s.status === 1).length}
+            {getActiveStreams().filter((s: any) => s.status === 1).length}
           </div>
         </div>
 
@@ -578,6 +661,27 @@ export default function Dashboard() {
               />
             </div>
 
+            {savedWorkers.length > 0 && (
+              <div className="space-y-1.5 animate-in fade-in">
+                <label className="text-xs text-muted-foreground font-semibold">Saved Workers</label>
+                <select
+                  onChange={(e) => {
+                    const selected = savedWorkers.find(w => w.address === e.target.value);
+                    if (selected) {
+                      setContractor(selected.address);
+                    }
+                  }}
+                  className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:border-accent"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Choose a saved worker...</option>
+                  {savedWorkers.map(w => (
+                    <option key={w.address} value={w.address}>{w.name} ({truncateAddress(w.address)})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-semibold">Contractor Public Key</label>
               <input
@@ -587,6 +691,29 @@ export default function Dashboard() {
                 onChange={(e) => setContractor(e.target.value)}
                 className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent font-mono"
               />
+            </div>
+
+            <div className="space-y-2 pt-1 pb-1">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={saveWorkerChecked}
+                  onChange={(e) => setSaveWorkerChecked(e.target.checked)}
+                  className="rounded bg-zinc-950 border-border border text-accent focus:ring-0 focus:ring-offset-0 h-4 w-4"
+                />
+                <span>Save worker for next time</span>
+              </label>
+              
+              {saveWorkerChecked && (
+                <input
+                  type="text"
+                  placeholder="Worker Name (e.g. John Doe)"
+                  value={workerName}
+                  onChange={(e) => setWorkerName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-border px-3 py-1.5 rounded-lg text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent animate-in slide-in-from-top-2"
+                  required
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -671,6 +798,30 @@ export default function Dashboard() {
             Wage Streams
           </h3>
 
+          {isConnected && getWithdrawableStreamsCount() > 0 && (
+            <div className="bg-card border border-border/80 p-5 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in">
+              <div className="space-y-1 text-center sm:text-left">
+                <h4 className="font-bold text-white text-sm">Wages Ready to Withdraw</h4>
+                <p className="text-xs text-muted-foreground font-light">
+                  You have earned money ready to claim across {getWithdrawableStreamsCount()} stream{getWithdrawableStreamsCount() === 1 ? '' : 's'}.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleWithdrawAll}
+                disabled={processingStreamId !== null || isWithdrawingAll}
+                className="w-full sm:w-auto bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-transform hover:-translate-y-0.5"
+              >
+                {isWithdrawingAll ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CircleDollarSign className="h-3.5 w-3.5" />
+                )}
+                <span>{isWithdrawingAll ? 'Withdrawing All...' : `Withdraw All My Money (${getTotalWithdrawableAmount().toFixed(4)} XLM)`}</span>
+              </button>
+            </div>
+          )}
+
           <div className="space-y-6">
             {isLoading ? (
               <div className="space-y-6">
@@ -691,6 +842,10 @@ export default function Dashboard() {
               const liveEarned = calculateLiveEarned(stream, timeTicker);
               const progress = stream.amount > 0 ? (liveEarned / stream.amount) * 100 : 0;
               const withdrawable = Math.max(0, liveEarned - stream.withdrawnAmount);
+
+              // Calculate time left in the stream
+              const timeLeft = stream.endTime - (timeTicker / 1000);
+              const isEndingSoon = stream.status === 1 && timeLeft > 0 && timeLeft < 86400; // Less than 24 hours left
 
               // Role checks
               const isEmployer = address ? stream.employer.toLowerCase() === address.toLowerCase() : false;
@@ -733,6 +888,12 @@ export default function Dashboard() {
                         className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-1000 shadow-md shadow-primary/20"
                       />
                     </div>
+                    {isEndingSoon && (
+                       <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 p-2.5 rounded-xl text-xs flex items-center gap-1.5 mt-2 animate-pulse font-medium">
+                         <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
+                         <span>Wages running out soon! (Less than {Math.ceil(timeLeft / 3600)} hours left)</span>
+                       </div>
+                    )}
                   </div>
 
                   {/* Wage values grid */}
