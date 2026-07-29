@@ -579,7 +579,7 @@ The frontend service layer already provides default contract IDs for the current
   <img width="1887" height="875" alt="Screenshot 2026-07-04 152749" src="https://github.com/user-attachments/assets/fc6ad72a-7214-453e-a3f5-2fe5b919bc7c" />
 ---
 
-## 🎥 Demo Video: https://drive.google.com/file/d/14SMIkWTHfojKK7sAuM9PrXXPOUQEjNML/view?usp=sharing
+## 🎥 Demo Video: https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
 ---
 
 ## 🔗 Live Demo:  https://stellar-journey-to-mastery.vercel.app/auth
