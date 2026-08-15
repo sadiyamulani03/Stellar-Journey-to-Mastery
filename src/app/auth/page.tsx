@@ -22,10 +22,14 @@ function AuthPageContent() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (mode === 'register' && password !== confirmPassword) {
+      return;
+    }
+    if (mode === 'register' && username !== confirmEmail) {
       return;
     }
 
@@ -110,6 +114,23 @@ function AuthPageContent() {
 
           {mode === 'register' && (
             <label className="block space-y-2 text-sm text-muted-foreground">
+              <span className="font-semibold text-white">Confirm Email</span>
+              <div className="flex items-center gap-2 bg-zinc-900 border border-border rounded-3xl px-4 py-4">
+                <User className="h-5 w-5 text-accent" />
+                <input
+                  type="email"
+                  value={confirmEmail}
+                  onChange={(e) => setConfirmEmail(e.target.value)}
+                  placeholder="Confirm your email address"
+                  className="w-full bg-transparent outline-none text-white placeholder:text-zinc-500"
+                  required
+                />
+              </div>
+            </label>
+          )}
+
+          {mode === 'register' && (
+            <label className="block space-y-2 text-sm text-muted-foreground">
               <span className="font-semibold text-white">Confirm Password</span>
               <div className="flex items-center gap-2 bg-zinc-900 border border-border rounded-3xl px-4 py-4">
                 <Lock className="h-5 w-5 text-accent" />
@@ -126,13 +147,16 @@ function AuthPageContent() {
           )}
 
           {error && <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
+          {mode === 'register' && username && confirmEmail && username !== confirmEmail && (
+            <div className="rounded-3xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-200">Email addresses do not match.</div>
+          )}
           {mode === 'register' && password && confirmPassword && password !== confirmPassword && (
             <div className="rounded-3xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-200">Passwords do not match.</div>
           )}
 
           <button
             type="submit"
-            disabled={isLoading || (mode === 'register' && password !== confirmPassword)}
+            disabled={isLoading || (mode === 'register' && (password !== confirmPassword || username !== confirmEmail))}
             className="w-full rounded-3xl bg-gradient-to-r from-primary to-accent px-5 py-4 text-sm font-semibold text-black transition disabled:opacity-50 shadow-lg shadow-accent/20"
           >
             {isLoading ? 'Processing...' : mode === 'login' ? 'Sign In' : 'Create Account'}

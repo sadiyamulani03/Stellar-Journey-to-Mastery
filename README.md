@@ -617,6 +617,14 @@ In this level, our focus shifted from core contract functionality to scaling pay
        - **Action Taken:** Added a dismissible **First-Time User Guide** banner on the dashboard and inline **tooltips** on key actions (Create Stream, Faucet).
     10. *Tanishq S. & Purva P.*: Flagged transfer fees as expensive/unclear.
         - **Action Taken:** Added a **fee transparency** panel in the stream creation form explaining the 100-stroop base fee and typical ~0.1 XLM transaction cost.
+    11. *Tanmay M.*: Suggested an email confirmation step at registration.
+        - **Action Taken:** Added a **Confirm Email** field to the registration form with client-side match validation alongside the existing Confirm Password check.
+    12. *Pritam M.*: Suggested QR code generation.
+        - **Action Taken:** Added a **wallet address QR code** modal (scannable, copy-to-clipboard) on the Settings page so users can easily share or fund their Stellar address.
+    13. *Jorge S. & Najmi M.*: Requested multi-token funding support.
+        - **Action Taken:** Replaced the raw token address field with an **Asset Selector** (XLM native preset, USDC, and custom token contract) that updates the amount label and stream display accordingly.
+    14. *Pritam M. & Amitabh D.*: Requested AI-powered feedback collection.
+        - **Action Taken:** Added an in-app **Feedback Widget** (star rating + comment) with a floating action button, so users can submit feedback directly from the dashboard instead of leaving the app.
 - **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/aa0e5c9)
 
 ### 📁 Presentation & Demo Assets 
@@ -625,10 +633,10 @@ In this level, our focus shifted from core contract functionality to scaling pay
 
 ### 🔮 Future Evolution & Roadmap
 Based on user feedback, the next phase of payLoyal will focus on:
-1. **SEP-24 Fiat On-Ramps:** Integrating Stellar Anchors directly so employers can deposit USDC/XLM using bank transfers/cards directly from the dashboard.
+1. **SEP-24 Fiat On-Ramps:** Integrating Stellar Anchors so employers can deposit USDC/XLM using real bank transfers/cards directly from the dashboard (the current ramp flow is a demo simulation).
 2. **Hana and xBull Integrations:** Extending wallet-native listeners to automatically sync connection states for mobile-first wallets.
-3. **Email verification on registration:** Add email confirmation flows so stream notifications can be pushed out-of-band.
-4. **Multi-token stream funding:** Let employers pick any asset (XLM/USDC/custom tokens) from a dropdown rather than a raw contract address.
+3. **Server-side email verification:** Sending real verification OTPs on registration so stream notifications can be pushed out-of-band.
+4. **Prebuilt USDC contract registry:** Bundling verified USDC/XLM SAC contract IDs for one-click selection (the current selector requires pasting the contract ID).
 5. **Mainnet readiness & gas transparency:** Deploy contract instances to Public Mainnet with clearer fee breakdowns before real payroll usage.
 
 ---

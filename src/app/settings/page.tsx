@@ -5,6 +5,7 @@ import * as freighterApi from '@stellar/freighter-api';
 import { useWallet } from '../../hooks/useWallet';
 import { Settings as SettingsIcon, Shield, Server, Wallet, Key, Cpu } from 'lucide-react';
 import { PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID } from '../../services/stellar';
+import WalletQRCode from '../../components/WalletQRCode';
 
 export default function SettingsPage() {
   const { address, network, isConnected, setNetwork, connectWallet, disconnectWallet } = useWallet();
@@ -68,8 +69,11 @@ export default function SettingsPage() {
               </div>
 
               {isConnected && address && (
-                <div className="bg-zinc-900 border border-border p-3 rounded-lg space-y-1">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Account Address</span>
+                <div className="bg-zinc-900 border border-border p-3 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Account Address</span>
+                    <WalletQRCode address={address} />
+                  </div>
                   <code className="text-xs text-white block break-all font-mono">{address}</code>
                 </div>
               )}

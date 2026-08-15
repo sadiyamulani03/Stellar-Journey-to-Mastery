@@ -34,6 +34,7 @@ import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
 import FirstTimeGuide from '../../components/FirstTimeGuide';
 import Tooltip from '../../components/Tooltip';
+import FeedbackWidget from '../../components/FeedbackWidget';
 
 const StreamSkeleton = () => (
   <div className="bg-card border border-border rounded-[2rem] p-7 space-y-6 animate-pulse">
@@ -104,7 +105,14 @@ export default function Dashboard() {
   const [amount, setAmount] = useState('');
   const [duration, setDuration] = useState('86400'); // Default: 1 Day
   const [customDuration, setCustomDuration] = useState('');
-  const [tokenAddress, setTokenAddress] = useState('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'); // default Testnet token or XLM
+  const [tokenAddress, setTokenAddress] = useState('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'); // default Testnet native XLM SAC
+  const [tokenPreset, setTokenPreset] = useState('xlm');
+
+  const TOKEN_PRESETS = [
+    { id: 'xlm', label: 'XLM (Native)', address: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC' },
+    { id: 'usdc', label: 'USDC (Paste Contract ID)', address: '' },
+    { id: 'custom', label: 'Custom Token Contract', address: '' },
+  ];
 
   // Faucet & Wallet detection
   const [faucetLoading, setFaucetLoading] = useState(false);
@@ -428,6 +436,9 @@ export default function Dashboard() {
       {/* First-time user guide */}
       <FirstTimeGuide />
 
+      {/* In-app feedback widget */}
+      <FeedbackWidget userId={user?.id} />
+
       {/* Wallet Not Connected Alert */}
       {!isConnected && (
         <div className="max-w-4xl mx-auto bg-card/40 border border-accent/20 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -726,7 +737,9 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-semibold">Total Amount (USDC/XLM)</label>
+                <label className="text-xs text-muted-foreground font-semibold">
+                  Total Amount ({tokenPreset === 'xlm' ? 'XLM' : tokenPreset === 'usdc' ? 'USDC' : 'Tokens'})
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -768,11 +781,38 @@ export default function Dashboard() {
             )}
 
               <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-semibold">Asset Token Address</label>
+                <label className="text-xs text-muted-foreground font-semibold">Funding Asset</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TOKEN_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setTokenPreset(preset.id);
+                        setTokenAddress(preset.address);
+                      }}
+                      className={`px-2 py-2 rounded-lg border text-xs font-semibold transition-all text-center ${
+                        tokenPreset === preset.id
+                          ? 'border-accent bg-accent/5 text-accent'
+                          : 'border-border bg-zinc-900 text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground font-semibold">Asset Token Contract Address</label>
                 <input
                   type="text"
                   value={tokenAddress}
-                  onChange={(e) => setTokenAddress(e.target.value)}
+                  onChange={(e) => {
+                    setTokenAddress(e.target.value);
+                    setTokenPreset(e.target.value === TOKEN_PRESETS[0].address ? 'xlm' : 'custom');
+                  }}
+                  placeholder={tokenPreset === 'usdc' ? 'Paste USDC SAC contract ID...' : 'CDL...'}
                   className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent font-mono text-xs"
                 />
               </div>
