@@ -643,8 +643,8 @@ In this level, our focus shifted from core contract functionality to scaling pay
 - **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/aa0e5c9)
 
 ### 📁 Presentation & Demo Assets 
-- **Demo Video Link:** *[Add Level 5 demo video link here]*
-- **Pitch Deck Link:** *[Add Level 5 pitch deck/PPT link here]*
+- **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
+- **Pitch Deck Link:** [payLoyal Level 5 Pitch Deck](https://docs.google.com/presentation/d/1XUOfCJmsc9BNI8bSIriRkvBfSRwXdnhn/edit?slide=id.p2#slide=id.p2)
 
 ### ✅ Level 5 Submission Checklist
 - [x] Public GitHub repository
