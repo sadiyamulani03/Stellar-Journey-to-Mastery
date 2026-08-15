@@ -626,6 +626,7 @@ In this level, our focus shifted from core contract functionality to scaling pay
     14. *Pritam M. & Amitabh D.*: Requested AI-powered feedback collection.
         - **Action Taken:** Added an in-app **Feedback Widget** (star rating + comment) with a floating action button, so users can submit feedback directly from the dashboard instead of leaving the app.
 - **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/aa0e5c9)
+- **Second Iteration Commit (Level 5):** [feat: address remaining Level 5 user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d723de3)
 
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
