@@ -360,6 +360,7 @@ The pipeline uses GitHub Actions to verify pull requests and automate deployment
 ## Live
 
 - **Live Link**: https://stellar-journey-to-mastery-1kzbuwjcw-sadiyamulani03s-projects.vercel.app/
+- **Deployment Note**: This repository is deployed exclusively via the `stellar-journey-to-mastery` Vercel project. No other Vercel project (e.g. `chainshield-supply-chain`) is associated with this repository.
 
 ---
 
