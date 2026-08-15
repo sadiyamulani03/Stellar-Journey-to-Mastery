@@ -50,15 +50,6 @@ A beginner-friendly Stellar dApp covering the core fundamentals:
 #### Transaction Result Shown to User
 <img width="1313" height="895" alt="Screenshot 2026-06-13 212115" src="https://github.com/user-attachments/assets/e9ecc168-a9c1-49e0-b90e-964c55241df4" />
 
-
-### ✅ Level 1 Checklist
-
-- [x] Freighter wallet connect + disconnect
-- [x] Public key displayed after connection
-- [x] XLM balance fetched and displayed (with refresh)
-- [x] Send XLM transaction on Stellar testnet
-- [x] Transaction feedback — success/failure + transaction hash
-
 ---
 
 ---
@@ -156,20 +147,6 @@ Or fund via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator
 
 #### wallet options available:
 <img width="1811" height="875" alt="image" src="https://github.com/user-attachments/assets/bce49da3-6d32-456f-898a-7e7296c41565" />
-
----
-### ✅ Level 2 Checklist
-
-- [x] Public GitHub repository
-- [x] Multi-wallet support (Freighter, Albedo, Hana, LOBSTR)
-- [x] Soroban smart contract deployed on testnet
-- [x] Contract called from frontend
-- [x] 3 error types handled
-- [x] Transaction status visible (pending / success / fail)
-- [x] Real-time state synchronization
-- [x] Minimum 2+ meaningful commits
-- [x] Deployed contract address included
-- [x] Verifiable transaction hash included
 
 ---
 
@@ -645,17 +622,6 @@ In this level, our focus shifted from core contract functionality to scaling pay
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
 - **Pitch Deck Link:** [payLoyal Level 5 Pitch Deck](https://docs.google.com/presentation/d/1XUOfCJmsc9BNI8bSIriRkvBfSRwXdnhn/edit?slide=id.p2#slide=id.p2)
-
-### ✅ Level 5 Submission Checklist
-- [x] Public GitHub repository
-- [x] 20+ meaningful commits (`git log --oneline | wc -l` = 28)
-- [x] Live deployed application
-- [x] PPT / pitch deck link
-- [x] Demo video link
-- [x] Proof of 50+ users (exported feedback spreadsheet with 50 responses)
-- [x] Screenshots of analytics / transaction activity
-- [x] Updated README and documentation
-- [x] User feedback iteration summary with commit references
 
 ### 🔮 Future Evolution & Roadmap
 Based on user feedback, the next phase of payLoyal will focus on:
