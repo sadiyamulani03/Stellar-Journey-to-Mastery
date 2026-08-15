@@ -38,13 +38,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         credentials: 'include',
       });
 
-      const payload = await parseJsonResponse(response, { error: 'Login failed.' });
+      const payload = await parseJsonResponse<{ error?: string; user?: UserProfile }>(response, {});
       if (!response.ok) {
         set({ error: getApiErrorMessage(payload, response, 'Login failed.'), isLoading: false });
         return false;
       }
 
-      set({ user: payload.user, isAuthenticated: true, isLoading: false, error: null });
+      set({ user: payload.user ?? null, isAuthenticated: true, isLoading: false, error: null });
       return true;
     } catch (error: any) {
       set({ error: error?.message || 'Login request failed.', isLoading: false });
@@ -62,13 +62,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         credentials: 'include',
       });
 
-      const payload = await parseJsonResponse(response, { error: 'Registration failed.' });
+      const payload = await parseJsonResponse<{ error?: string; user?: UserProfile }>(response, {});
       if (!response.ok) {
         set({ error: getApiErrorMessage(payload, response, 'Registration failed.'), isLoading: false });
         return false;
       }
 
-      set({ user: payload.user, isAuthenticated: true, isLoading: false, error: null });
+      set({ user: payload.user ?? null, isAuthenticated: true, isLoading: false, error: null });
       return true;
     } catch (error: any) {
       set({ error: error?.message || 'Registration request failed.', isLoading: false });

@@ -4,26 +4,53 @@
 
 /* Premium Vanilla CSS System for payLoyal */
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --border: #27272a;
-  --primary: #8b5cf6;
-  --accent: #f97316;
-  --accent-hover: #ea580c;
-  --muted: #a1a1aa;
-  --success: #22c55e;
-  --info: #3b82f6;
-  --warning: #eab308;
-  --danger: #ef4444;
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 6% 10%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 258 90% 66%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 4% 16%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 24 95% 53%;
+  --accent-foreground: 0 0% 100%;
+  --border: 240 4% 16%;
+  --accent-hover: 21 95% 48%;
+  --success: 142 71% 45%;
+  --info: 217 91% 60%;
+  --warning: 48 96% 53%;
+  --danger: 0 84% 60%;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Outfit', sans-serif;
 }
 
+/* Light theme */
+html.light {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 258 90% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 6% 10%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%;
+  --accent: 24 95% 50%;
+  --accent-foreground: 0 0% 100%;
+  --border: 240 6% 90%;
+}
+
 /* Base Styles */
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   font-family: var(--font-sans);
   margin: 0;
   padding: 0;
@@ -33,22 +60,49 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* --- LIGHT THEME UTILITY REMAPS ---
+   The codebase uses dark zinc/black/white utilities by default.
+   These rules remap the most common ones so light mode renders correctly. */
+html.light .bg-black { background-color: #fafafa; }
+html.light .text-white { color: #18181b; }
+html.light .bg-zinc-950 { background-color: #ffffff; }
+html.light .bg-zinc-950\/95 { background-color: #ffffff; }
+html.light .bg-zinc-950\/80 { background-color: rgba(255, 255, 255, 0.8); }
+html.light .bg-zinc-950\/70 { background-color: rgba(255, 255, 255, 0.7); }
+html.light .bg-zinc-950\/60 { background-color: rgba(255, 255, 255, 0.6); }
+html.light .bg-zinc-950\/40 { background-color: rgba(255, 255, 255, 0.4); }
+html.light .bg-zinc-900 { background-color: #f4f4f5; }
+html.light .bg-zinc-900\/80 { background-color: rgba(244, 244, 245, 0.8); }
+html.light .bg-zinc-900\/60 { background-color: rgba(244, 244, 245, 0.6); }
+html.light .bg-zinc-900\/50 { background-color: rgba(244, 244, 245, 0.5); }
+html.light .bg-zinc-900\/40 { background-color: rgba(244, 244, 245, 0.4); }
+html.light .bg-zinc-800 { background-color: #e4e4e7; }
+html.light .bg-zinc-500\/10 { background-color: rgba(113, 113, 122, 0.1); }
+html.light .text-zinc-300 { color: #3f3f46; }
+html.light .text-zinc-400 { color: #52525b; }
+html.light .text-zinc-500 { color: #71717a; }
+html.light .text-zinc-600 { color: #71717a; }
+html.light .text-zinc-700 { color: #3f3f46; }
+html.light .border-zinc-700 { border-color: #d4d4d8; }
+html.light .border-zinc-800 { border-color: #e4e4e7; }
+html.light .border-zinc-500\/20 { border-color: rgba(113, 113, 122, 0.2); }
+
 /* --- NAVIGATION CSS --- */
 .nav-container {
-  border-bottom: 1px solid var(--border);
-  background-color: rgba(24, 24, 27, 0.5);
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsla(var(--card), 0.5);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 50;
 }
 .nav-link-active {
-  color: var(--accent) !important;
-  border-bottom: 2px solid var(--accent);
+  color: hsl(var(--accent)) !important;
+  border-bottom: 2px solid hsl(var(--accent));
 }
 .wallet-badge {
-  background-color: #09090b;
-  border: 1px solid var(--border);
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
   padding: 0.375rem 0.75rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
@@ -75,7 +129,7 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   background-color: rgba(249, 115, 22, 0.15);
-  color: var(--accent);
+  color: hsl(var(--accent));
   border: 1px solid rgba(249, 115, 22, 0.2);
 }
 .hero-title {
@@ -86,12 +140,12 @@ body {
   letter-spacing: -0.02em;
 }
 .gradient-text {
-  background: linear-gradient(to right, var(--accent), #a78bfa, #6366f1);
+  background: linear-gradient(to right, hsl(var(--accent)), #a78bfa, #6366f1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .btn-primary {
-  background: linear-gradient(to right, var(--primary), var(--accent));
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
   color: white;
   font-weight: 600;
   padding: 0.875rem 2rem;
@@ -110,7 +164,7 @@ body {
 .btn-secondary {
   background-color: #18181b;
   color: white;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   font-weight: 600;
   padding: 0.875rem 2rem;
   border-radius: 0.5rem;
@@ -124,8 +178,8 @@ body {
   background-color: #27272a;
 }
 .stats-card {
-  background-color: var(--card);
-  border: 1px solid var(--border);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   padding: 1.5rem;
   border-radius: 0.75rem;
   position: relative;
@@ -136,7 +190,7 @@ body {
   border-color: #3f3f46;
 }
 .feature-card {
-  background-color: var(--card);
+  background-color: hsl(var(--card));
   border: 1px solid rgba(39, 39, 42, 0.8);
   padding: 2rem;
   border-radius: 1rem;
@@ -146,7 +200,7 @@ body {
 }
 .flow-card {
   background-color: rgba(24, 24, 27, 0.6);
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   padding: 1.5rem;
   border-radius: 0.75rem;
   position: relative;
@@ -154,15 +208,15 @@ body {
 
 /* --- DASHBOARD PAGE CSS --- */
 .dashboard-form-card {
-  background-color: var(--card);
-  border: 1px solid var(--border);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   padding: 1.5rem;
   border-radius: 1rem;
 }
 .form-input {
   width: 100%;
   background-color: #09090b;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
@@ -171,11 +225,11 @@ body {
 }
 .form-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: hsl(var(--accent));
 }
 .agreement-item-card {
-  background-color: var(--card);
-  border: 1px solid var(--border);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   padding: 1.5rem;
   border-radius: 0.75rem;
   transition: border-color 0.2s ease;
@@ -192,22 +246,22 @@ body {
 }
 .badge-created {
   background-color: rgba(234, 179, 8, 0.1);
-  color: var(--warning);
+  color: hsl(var(--warning));
   border-color: rgba(234, 179, 8, 0.2);
 }
 .badge-active {
   background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
+  color: hsl(var(--success));
   border-color: rgba(34, 197, 94, 0.2);
 }
 .badge-completed {
   background-color: rgba(59, 130, 246, 0.1);
-  color: var(--info);
+  color: hsl(var(--info));
   border-color: rgba(59, 130, 246, 0.2);
 }
 .badge-cancelled {
   background-color: rgba(113, 113, 122, 0.1);
-  color: var(--muted);
+  color: hsl(var(--muted));
   border-color: rgba(113, 113, 122, 0.2);
 }
 
@@ -225,7 +279,7 @@ body {
   left: -35px;
   top: 0.375rem;
   background-color: #09090b;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   padding: 0.25rem;
   border-radius: 9999px;
 }
@@ -233,7 +287,7 @@ body {
 /* --- TRANSACTION CENTER CSS --- */
 .tx-item-row {
   background-color: rgba(24, 24, 27, 0.4);
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 0.75rem;
   padding: 1.25rem;
   transition: border-color 0.2s ease;
@@ -245,16 +299,16 @@ body {
   font-family: monospace;
   font-size: 0.75rem;
   background-color: #09090b;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
-  color: var(--accent);
+  color: hsl(var(--accent));
 }
 
 /* --- ANALYTICS PAGE CSS --- */
 .analytics-metric-box {
-  background-color: var(--card);
-  border: 1px solid var(--border);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   padding: 1.5rem;
   border-radius: 1rem;
   position: relative;
@@ -268,7 +322,7 @@ body {
   gap: 0.5rem;
 }
 .chart-bar {
-  background: linear-gradient(to top, var(--primary), var(--accent));
+  background: linear-gradient(to top, hsl(var(--primary)), hsl(var(--accent)));
   border-top-left-radius: 0.375rem;
   border-top-right-radius: 0.375rem;
   width: 100%;
@@ -279,7 +333,7 @@ body {
 }
 .health-stat-card {
   background-color: rgba(24, 24, 27, 0.4);
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   padding: 1rem;
   border-radius: 0.75rem;
 }
@@ -297,14 +351,14 @@ body {
 .network-select-btn {
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   font-size: 0.875rem;
   font-weight: 600;
   text-align: center;
   transition: all 0.2s ease;
 }
 .network-select-active {
-  border-color: var(--accent);
+  border-color: hsl(var(--accent));
   background-color: rgba(249, 115, 22, 0.05);
-  color: var(--accent);
+  color: hsl(var(--accent));
 }

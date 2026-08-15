@@ -6,7 +6,6 @@ import AuthNavigation from "../components/AuthNavigation";
 import AuthGuard from "../components/AuthGuard";
 import ToastContainer from "../components/ToastContainer";
 import GlobalInit from "../components/GlobalInit";
-
 export const metadata: Metadata = {
   title: "payLoyal | Streaming Escrow & Dispute Resolution",
   description: "A startup-grade second-by-second linear payroll streaming and decentralized arbiter dispute resolution platform built on Stellar.",
@@ -20,11 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('payloyal_theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light');}}catch(e){}})();`,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-black text-white min-h-screen flex flex-col font-sans antialiased overflow-x-hidden">
+      <body className="bg-background text-foreground min-h-screen flex flex-col font-sans antialiased overflow-x-hidden">
         <Providers>
           <GlobalInit />
           <AuthGuard />

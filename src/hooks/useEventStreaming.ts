@@ -4,11 +4,13 @@ import { fetchRecentEvents, type StellarEvent } from '../services/stellar';
 import { stroopsToXlm } from '../lib/stellar-events';
 import { useToastStore } from '../store/useToastStore';
 import { useWalletStore } from '../store/useWalletStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 export function useEventStreaming() {
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
   const { address } = useWalletStore();
+  const pushNotification = useNotificationStore((s) => s.push);
   const [events, setEvents] = useState<StellarEvent[]>([]);
   const seenEventIds = useRef<Set<string>>(new Set());
   const isInitialLoad = useRef<boolean>(true);
@@ -71,57 +73,68 @@ export function useEventStreaming() {
           const id = data[1]?.toString() || '?';
           const amount = stroopsToXlm(data[4]);
           addToast(`New wage stream #${id} created with ${amount} XLM!`, 'success');
+          pushNotification('Stream Created', `New wage stream #${id} created with ${amount} XLM.`, 'success');
           break;
         }
         case 'StreamFunded': {
           const id = data[1]?.toString() || '?';
           addToast(`Wage stream #${id} has been funded and is now active!`, 'success');
+          pushNotification('Stream Funded', `Wage stream #${id} funded and now streaming.`, 'success');
           break;
         }
         case 'StreamPaused': {
           const id = data[1]?.toString() || '?';
           addToast(`Wage stream #${id} was paused by the employer.`, 'warning');
+          pushNotification('Stream Paused', `Wage stream #${id} was paused by the employer.`, 'warning');
           break;
         }
         case 'StreamResumed': {
           const id = data[1]?.toString() || '?';
           addToast(`Wage stream #${id} has been resumed.`, 'success');
+          pushNotification('Stream Resumed', `Wage stream #${id} has been resumed.`, 'success');
           break;
         }
         case 'WagesWithdrawn': {
           const id = data[1]?.toString() || '?';
           const amount = stroopsToXlm(data[3]);
           addToast(`Contractor claimed ${amount} XLM wages from stream #${id}!`, 'info');
+          pushNotification('Wages Withdrawn', `Contractor claimed ${amount} XLM wages from stream #${id}.`, 'info');
           break;
         }
         case 'DisputeRaised': {
           const id = data[1]?.toString() || '?';
           addToast(`Wage stream #${id} is disputed! Lock applied.`, 'error');
+          pushNotification('Dispute Raised', `Wage stream #${id} is disputed. Funds locked.`, 'error');
           break;
         }
         case 'StreamResolved': {
           const id = data[1]?.toString() || '?';
           addToast(`Dispute resolved for stream #${id}! Funds split and unlocked.`, 'success');
+          pushNotification('Dispute Resolved', `Dispute resolved for stream #${id}. Funds unlocked.`, 'success');
           break;
         }
         case 'DisputeResolved': {
           const id = data[1]?.toString() || '?';
           addToast(`Dispute #${id} resolved by arbiters.`, 'success');
+          pushNotification('Dispute Resolved', `Dispute #${id} resolved by arbiters.`, 'success');
           break;
         }
         case 'Reward': {
           const points = data[2]?.toString() || '0';
           addToast(`Contractor awarded +${points} Loyalty Reward Points!`, 'info');
+          pushNotification('Loyalty Reward', `Contractor awarded +${points} Loyalty Reward Points.`, 'info');
           break;
         }
         case 'ArbiterStaked': {
           const amount = stroopsToXlm(data[2]);
           addToast(`Arbiter staked ${amount} XLM bond.`, 'info');
+          pushNotification('Arbiter Staked', `Arbiter staked ${amount} XLM bond.`, 'info');
           break;
         }
         case 'DisputeRegistered': {
           const id = data[1]?.toString() || '?';
           addToast(`Dispute #${id} registered for arbitration.`, 'warning');
+          pushNotification('Dispute Registered', `Dispute #${id} registered for arbitration.`, 'warning');
           break;
         }
       }

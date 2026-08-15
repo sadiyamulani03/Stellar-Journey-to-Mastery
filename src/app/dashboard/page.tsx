@@ -27,10 +27,13 @@ import {
   Building,
   Award,
   RefreshCw,
-  Zap
+  Zap,
+  Info
 } from 'lucide-react';
 import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
+import FirstTimeGuide from '../../components/FirstTimeGuide';
+import Tooltip from '../../components/Tooltip';
 
 const StreamSkeleton = () => (
   <div className="bg-card border border-border rounded-[2rem] p-7 space-y-6 animate-pulse">
@@ -422,6 +425,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-12 max-w-6xl mx-auto">
+      {/* First-time user guide */}
+      <FirstTimeGuide />
+
       {/* Wallet Not Connected Alert */}
       {!isConnected && (
         <div className="max-w-4xl mx-auto bg-card/40 border border-accent/20 rounded-[2rem] p-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
@@ -539,23 +545,25 @@ export default function Dashboard() {
                 </div>
               )}
               
-              <button
-                onClick={handleFaucet}
-                disabled={faucetLoading}
-                className="w-full bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
-              >
-                {faucetLoading ? (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    <span>Funding Wallet...</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-3.5 w-3.5" />
-                    <span>Request Friendbot XLM</span>
-                  </>
-                )}
-              </button>
+              <Tooltip content="One-click Testnet funding via Stellar Friendbot. Grants 10,000 XLM for testing." side="bottom">
+                <button
+                  onClick={handleFaucet}
+                  disabled={faucetLoading}
+                  className="w-full bg-gradient-to-r from-accent to-indigo-600 hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
+                >
+                  {faucetLoading ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <span>Funding Wallet...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-3.5 w-3.5" />
+                      <span>Request Friendbot XLM</span>
+                    </>
+                  )}
+                </button>
+              </Tooltip>
               
               <div className="flex items-center gap-1.5 justify-start text-[10px] text-muted-foreground">
                 <span>Detected in Browser:</span>
@@ -759,15 +767,26 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground font-semibold">Asset Token Address</label>
-              <input
-                type="text"
-                value={tokenAddress}
-                onChange={(e) => setTokenAddress(e.target.value)}
-                className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent font-mono text-xs"
-              />
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground font-semibold">Asset Token Address</label>
+                <input
+                  type="text"
+                  value={tokenAddress}
+                  onChange={(e) => setTokenAddress(e.target.value)}
+                  className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent font-mono text-xs"
+                />
+              </div>
+
+              <div className="bg-zinc-900/50 border border-border rounded-lg p-3 space-y-1">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                  <Info className="h-3 w-3 text-accent" />
+                  Stellar Network Fees
+                </span>
+                <p className="text-[11px] text-muted-foreground font-light leading-relaxed">
+                  Base fee is <span className="text-white font-semibold">0.00001 XLM (100 stroops)</span> per operation.
+                  A typical stream transaction costs ~<span className="text-white font-semibold">0.1 XLM</span> total after network fees — among the lowest in crypto (~₹2 at current rates).
+                </p>
+              </div>
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-xs flex gap-1.5">
@@ -776,18 +795,20 @@ export default function Dashboard() {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
-            >
-              {isCreating ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              <span>{isCreating ? 'Creating Stream...' : 'Create Stream'}</span>
-            </button>
+            <Tooltip content="Create a payroll agreement with a contractor. Requires wallet approval." side="top">
+              <button
+                type="submit"
+                disabled={isCreating}
+                className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
+              >
+                {isCreating ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                <span>{isCreating ? 'Creating Stream...' : 'Create Stream'}</span>
+              </button>
+            </Tooltip>
           </form>
         </div>
 

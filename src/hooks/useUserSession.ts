@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTxStore } from '../store/useTxStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { resetUserSession } from '../lib/reset-user-session';
 
 export function useUserSession() {
@@ -21,6 +22,7 @@ export function useUserSession() {
 
     if (userId) {
       useTxStore.getState().loadForUser(userId);
+      useNotificationStore.getState().loadForUser(userId);
     } else if (previous) {
       useTxStore.getState().clearTransactions();
     }

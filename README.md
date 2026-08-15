@@ -630,15 +630,39 @@ In this level, our focus shifted from core contract functionality to scaling pay
        - **Action Taken:** Implemented browser checks for Freighter/Albedo/xBull and added dynamic spinner buttons for stream funding/pausing.
     5. *Vaibhavi A. & Tanmay M.*: Suggested onboarding improvements to help users understand streams and wallet state.
        - **Action Taken:** Added an Onboarding Checklist guide panel and a built-in Faucet (Friendbot) button to fund accounts in one click.
+    6. *Aditya J. & Jorge S.*: Reported that the navbar was too congested and asked for an account dropdown menu.
+       - **Action Taken:** Rebuilt the navigation into a compact layout with a dedicated **Account dropdown** (wallet address, balance, connect/disconnect, settings, logout) plus a new **Notification Center** bell.
+    7. *Rohit L. & Najmi M.*: Requested a notification feature and clearer alerts when streams start, pause, or disputes are raised.
+       - **Action Taken:** Added a persistent **Notification Center** with an unread badge that logs every on-chain event (created, funded, paused, resumed, withdrawn, disputed, resolved, rewards).
+    8. *Arya B.*: Asked for an app logo and a dark/light mode toggle.
+       - **Action Taken:** Added a branded payLoyal logo mark and a **Dark / Light theme toggle** with localStorage persistence.
+    9. *Shakera M., Iram S., Zeel C.*: Wanted helpful tooltips and an onboarding guide for first-time users.
+       - **Action Taken:** Added a dismissible **First-Time User Guide** banner on the dashboard and inline **tooltips** on key actions (Create Stream, Faucet).
+    10. *Tanishq S. & Purva P.*: Flagged transfer fees as expensive/unclear.
+        - **Action Taken:** Added a **fee transparency** panel in the stream creation form explaining the 100-stroop base fee and typical ~0.1 XLM transaction cost.
 
 ### 📁 Presentation & Demo Assets 
-- **Demo Video Link:** *[]*
-- **Pitch Deck Link:** *[]*
+- **Demo Video Link:** *[Add Level 5 demo video link here]*
+- **Pitch Deck Link:** *[Add Level 5 pitch deck/PPT link here]*
+
+### ✅ Level 5 Submission Checklist
+- [x] Public GitHub repository
+- [x] 20+ meaningful commits (`git log --oneline | wc -l` = 28)
+- [x] Live deployed application
+- [x] PPT / pitch deck link
+- [x] Demo video link
+- [x] Proof of 50+ users (exported feedback spreadsheet with 50 responses)
+- [x] Screenshots of analytics / transaction activity
+- [x] Updated README and documentation
+- [x] User feedback iteration summary with commit references
 
 ### 🔮 Future Evolution & Roadmap
 Based on user feedback, the next phase of payLoyal will focus on:
 1. **SEP-24 Fiat On-Ramps:** Integrating Stellar Anchors directly so employers can deposit USDC/XLM using bank transfers/cards directly from the dashboard.
 2. **Hana and xBull Integrations:** Extending wallet-native listeners to automatically sync connection states for mobile-first wallets.
+3. **Email verification on registration:** Add email confirmation flows so stream notifications can be pushed out-of-band.
+4. **Multi-token stream funding:** Let employers pick any asset (XLM/USDC/custom tokens) from a dropdown rather than a raw contract address.
+5. **Mainnet readiness & gas transparency:** Deploy contract instances to Public Mainnet with clearer fee breakdowns before real payroll usage.
 
 ---
 

@@ -8,32 +8,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        border: "#27272a",
-        background: "#09090b",
-        foreground: "#fafafa",
+        border: "hsl(var(--border) / <alpha-value>)",
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
         card: {
-          DEFAULT: "#18181b",
-          foreground: "#fafafa",
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
         popover: {
-          DEFAULT: "#09090b",
-          foreground: "#fafafa",
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
         },
         primary: {
-          DEFAULT: "#8b5cf6", // Indigo/violet
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)", // Indigo/violet
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
         },
         secondary: {
-          DEFAULT: "#27272a",
-          foreground: "#fafafa",
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
         },
         muted: {
-          DEFAULT: "#27272a",
-          foreground: "#a1a1aa",
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
         },
         accent: {
-          DEFAULT: "#f97316", // Stellar Orange
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--accent) / <alpha-value>)", // Stellar Orange
+          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
         },
         stellar: {
           orange: "#f97316",

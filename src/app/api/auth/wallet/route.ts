@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getUserById, updateUserWallet } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   if (!token) {
     return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
