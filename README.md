@@ -621,7 +621,7 @@ In this level, our focus shifted from core contract functionality to scaling pay
   - **Overall Experience Rating:** Average 4.7/5 stars.
   - **Key User Feedback Points & Action Taken:**
     1. *Vishvajit B. & Anjali P.*: Suggested adding loading skeletons/spinners when connecting rather than just disabling buttons.
-       - **Action Taken:** Updated connect buttons to display active spinners and connection text stages.
+       - **Action Taken:** Updated connect buttons to display active spinners and connection text stages. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606))
     2. *Bhavesh P.*: Noted that the app froze when waiting for wallet signatures.
        - **Action Taken:** Created a connection stage state engine in `useWalletStore` cycling through `idle`, `detecting`, `waiting_signature`, and `verifying` with status labels.
     3. *Sheetal G.*: Requested friendly error mapping instead of generic "Failed" messages.
@@ -640,6 +640,7 @@ In this level, our focus shifted from core contract functionality to scaling pay
        - **Action Taken:** Added a dismissible **First-Time User Guide** banner on the dashboard and inline **tooltips** on key actions (Create Stream, Faucet).
     10. *Tanishq S. & Purva P.*: Flagged transfer fees as expensive/unclear.
         - **Action Taken:** Added a **fee transparency** panel in the stream creation form explaining the 100-stroop base fee and typical ~0.1 XLM transaction cost.
+- **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/aa0e5c9)
 
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** *[Add Level 5 demo video link here]*
