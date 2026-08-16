@@ -596,7 +596,12 @@ In this level, our focus shifted from core contract functionality to scaling pay
 - **Onboarded Users:** 50+ active testnet users with real transaction activity on Stellar Testnet.
 - **Exported Feedback Registry:** [feedback](https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342) containing all 50 user responses and wallet details.
 - **User Feedback Summary:**
-  - **Overall Experience Rating:** Average 4.7/5 stars.
+  - **Overall Experience Rating:** Average 4.7/5 stars (73% gave 5★, 22% gave 4★, 6% gave 3★).
+  - **Ease of Use:** 80% of users found the app Easy (51%) or Very Easy (29%) on first try; 20% were Neutral.
+  - **Transfer Fees:** 90% found fees Reasonable or Very Reasonable; a small minority (6%) flagged them as Expensive.
+  - **Most Used Features:** Connect Wallet (92%), Create Stream (71%), Fund Stream (63%), Stake (35%), Withdraw (27%), Dispute (25%), Pause/Resume (~44% combined).
+  - **Most Liked:** Clean UI/UX (34 responses), fast wallet integration, the streaming concept, and the escrow + arbiter dispute resolution model.
+  - **Top Improvement Requests (all now implemented):** loading spinners, friendly error messages, wallet auto-detection, onboarding guide/tooltips, notifications, navbar de-congestion + account dropdown, dark/light toggle + logo, fee transparency, confirm-email, QR code, multi-token selector, in-app feedback widget.
   - **Key User Feedback Points & Action Taken:**
     1. *Vishvajit B. & Anjali P.*: Suggested adding loading skeletons/spinners when connecting rather than just disabling buttons.
        - **Action Taken:** Updated connect buttons to display active spinners and connection text stages. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606))
