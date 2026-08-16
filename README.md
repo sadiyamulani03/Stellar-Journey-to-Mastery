@@ -601,7 +601,7 @@ We onboarded 51 test users to interact with core wallet, streaming, dispute, and
 **Raw responses:** https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342
 
 ### Feedback Summary
-* 47 users successfully connected a Stellar wallet
+* 51 users successfully connected a Stellar wallet
 * 36 created at least one payment stream
 * 32 funded at least one stream
 * Average overall rating: 4.7/5
