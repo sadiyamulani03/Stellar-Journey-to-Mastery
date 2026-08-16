@@ -592,6 +592,24 @@ We onboarded 12 test users to interact with core wallet and streaming features.
 
 In this level, our focus shifted from core contract functionality to scaling payLoyal based on real-world user feedback. We collected feedback from over 50 testnet users, implemented responsive UX/UI enhancements, and drafted professional presentation layouts.
 
+### User Testing & Feedback
+
+We onboarded 51 test users to interact with core wallet, streaming, dispute, and loyalty features.
+
+**Feedback form:** https://docs.google.com/forms/d/e/1FAIpQLSd0n5ZvYKCw1-1SxIBfwp_Gsw2ghN65797w8ke72dTsBFXP-Q/viewform
+
+**Raw responses:** https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342
+
+### Feedback Summary
+* 47 users successfully connected a Stellar wallet
+* 36 created at least one payment stream
+* 32 funded at least one stream
+* Average overall rating: 4.7/5
+* Average ease-of-use: Easy (80% rated Easy or Very Easy)
+* Common praise: Clean, intuitive UI, fast wallet integration
+* Common feedback: Add loading states during wallet connection and transactions
+* Other feedback: Improve error messages, auto-detect installed wallets, navbar de-congestion, add notifications, dark/light mode, tooltips, fee transparency, QR code, multi-token support
+
 ### 📈 User Growth & Onboarding Proof
 - **Onboarded Users:** 50+ active testnet users with real transaction activity on Stellar Testnet.
 - **Exported Feedback Registry:** [feedback](https://docs.google.com/spreadsheets/d/1IrlgRcUWINIM_uIl9OU1ASUgdH8r9Dmq1dqr0XetE2Y/edit?gid=591760342#gid=591760342) containing all 50 user responses and wallet details.
