@@ -64,6 +64,7 @@ export function useWallet() {
     isConnecting: store.isConnecting,
     connectionStage: store.connectionStage,
     detectedWallets: store.detectedWallets,
+    isMobile: store.isMobile,
     error: store.error,
     kit: store.kit,
     connectWallet: () => store.connectWallet(userId ?? undefined, false),

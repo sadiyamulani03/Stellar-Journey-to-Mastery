@@ -71,7 +71,7 @@ const StreamSkeleton = () => (
 
 export default function Dashboard() {
   const router = useRouter();
-  const { address, balance, isConnected, isConnecting, connectionStage, detectedWallets, error: walletError, connectWallet, updateBalance, detectWallets } = useWallet();
+  const { address, balance, isConnected, isConnecting, connectionStage, detectedWallets, isMobile, error: walletError, connectWallet, updateBalance, detectWallets } = useWallet();
   const { isAuthenticated, user } = useAuth();
   const { 
     streams, 
@@ -499,7 +499,9 @@ export default function Dashboard() {
               <div className="flex items-center gap-1.5 justify-center sm:justify-start text-[10px] text-muted-foreground">
                 <span>Detected in Browser:</span>
                 {detectedWallets.length === 0 ? (
-                  <span className="text-zinc-500 font-medium">None detected (Please install Freighter)</span>
+                  <span className="text-zinc-500 font-medium">
+                    {isMobile ? 'None detected (use Freighter or Lobstr mobile app)' : 'None detected (Please install Freighter)'}
+                  </span>
                 ) : (
                   detectedWallets.map((w) => (
                     <span key={w} className="bg-zinc-900 border border-border px-1.5 py-0.5 rounded text-white font-semibold text-[9px]">
@@ -508,6 +510,15 @@ export default function Dashboard() {
                   ))
                 )}
               </div>
+
+              {isMobile && detectedWallets.length === 0 && (
+                <div className="bg-amber-500/5 border border-amber-500/20 text-amber-400/90 px-3 py-2 rounded-xl text-[11px] leading-relaxed text-left max-w-md">
+                  <strong className="font-semibold">Mobile wallet tip:</strong> Install the{' '}
+                  <a href="https://freighter.app" target="_blank" rel="noreferrer" className="underline hover:opacity-80">Freighter</a> or{' '}
+                  <a href="https://lobstr.co" target="_blank" rel="noreferrer" className="underline hover:opacity-80">Lobstr</a>{' '}
+                  app, then connect through its in-app browser for the full payLoyal experience.
+                </div>
+              )}
 
               {walletError && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-xl text-xs flex gap-1.5 mt-1 text-left items-center max-w-md">

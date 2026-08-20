@@ -3,7 +3,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllStreams } from '../../services/stellar';
-import { BarChart3, TrendingUp, DollarSign, Users, Award, ShieldCheck } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Users, Award, ShieldCheck, Layers } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const { data: streams = [], isLoading, isError } = useQuery({
@@ -72,6 +72,19 @@ export default function AnalyticsPage() {
   });
 
   const maxChartVal = Math.max(...months.map((m) => m.val), 1);
+
+  // Stream lifecycle status distribution (0 Created, 1 Active, 2 Completed, 3 Paused, 4 Disputed)
+  const statusBreakdown = [
+    { label: 'Active', code: 1, color: 'bg-green-400', text: 'text-green-400' },
+    { label: 'Completed', code: 2, color: 'bg-accent', text: 'text-accent' },
+    { label: 'Paused', code: 3, color: 'bg-yellow-400', text: 'text-yellow-400' },
+    { label: 'Created', code: 0, color: 'bg-zinc-400', text: 'text-zinc-400' },
+    { label: 'Disputed', code: 4, color: 'bg-red-400', text: 'text-red-400' },
+  ].map((item) => ({
+    ...item,
+    count: streams.filter((s: any) => s.status === item.code).length,
+  }));
+  const maxStatusCount = Math.max(...statusBreakdown.map((s) => s.count), 1);
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
@@ -221,6 +234,38 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+      </div>
+
+      {/* Stream Lifecycle Status Distribution */}
+      <div className="bg-card border border-border p-6 rounded-[2rem] space-y-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 className="font-bold text-white text-base flex items-center gap-2">
+            <Layers className="h-4 w-4 text-accent" />
+            Stream Lifecycle Status
+          </h3>
+          <span className="text-xs text-muted-foreground font-light">
+            Live distribution of agreements by contract state
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          {statusBreakdown.map((item) => (
+            <div key={item.label} className="bg-zinc-950/60 border border-border rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <span className={`h-2 w-2 rounded-full ${item.color}`} />
+                <span className={`text-xs font-semibold ${item.text}`}>{item.label}</span>
+              </div>
+              <div className="text-2xl font-extrabold text-white">{item.count}</div>
+              <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${item.color} rounded-full transition-all`}
+                  style={{ width: `${(item.count / maxStatusCount) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Network Stats / Gas Fees Panel */}

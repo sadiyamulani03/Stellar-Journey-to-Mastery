@@ -36,6 +36,7 @@ interface WalletState {
   isConnecting: boolean;
   connectionStage: 'idle' | 'detecting' | 'waiting_signature' | 'verifying';
   detectedWallets: string[];
+  isMobile: boolean;
   error: string | null;
   kit: any;
   connectWallet: (userId?: string, silent?: boolean) => Promise<string | null>;
@@ -53,6 +54,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   isConnecting: false,
   connectionStage: 'idle',
   detectedWallets: [],
+  isMobile: false,
   error: null,
   kit: typeof window !== 'undefined' ? StellarWalletsKit : null,
 
@@ -63,7 +65,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     if (!!(window as any).albedo) detected.push('Albedo');
     if (!!(window as any).xbull) detected.push('xBull');
     if (!!(window as any).lobstr) detected.push('Lobstr');
-    set({ detectedWallets: detected });
+    const isMobile =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+      (typeof navigator !== 'undefined' && 'maxTouchPoints' in navigator && navigator.maxTouchPoints > 1);
+    set({ detectedWallets: detected, isMobile });
   },
 
   connectWallet: async (userId?: string, silent = false) => {

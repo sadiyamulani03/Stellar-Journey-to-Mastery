@@ -3,7 +3,7 @@
 import React from 'react';
 import * as freighterApi from '@stellar/freighter-api';
 import { useWallet } from '../../hooks/useWallet';
-import { Settings as SettingsIcon, Shield, Server, Wallet, Key, Cpu } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Server, Wallet, Key, Cpu, BookOpen, PlayCircle, Smartphone } from 'lucide-react';
 import { PAYMENT_LOGGER_CONTRACT_ID, LOYALTY_TOKEN_CONTRACT_ID, PAYLOYAL_RESOLVER_CONTRACT_ID } from '../../services/stellar';
 import WalletQRCode from '../../components/WalletQRCode';
 
@@ -122,7 +122,11 @@ export default function SettingsPage() {
                   </span>
                 ) : (
                   <span>
-                    Warning: Deploying escrow payroll payouts on Public Mainnet involves real XLM/USDC tokens. Ensure contract variables are double checked.
+                    <span className="flex items-center gap-1.5 mb-1">
+                      <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                      <strong className="text-amber-400 font-semibold">Mainnet Preview</strong>
+                    </span>
+                    Deploying escrow payroll payouts on Public Mainnet involves real XLM/USDC tokens. Ensure contract variables are double checked.
                   </span>
                 )}
               </div>
@@ -166,6 +170,61 @@ export default function SettingsPage() {
                   {LOYALTY_TOKEN_CONTRACT_ID}
                 </code>
               </div>
+            </div>
+          </div>
+
+        {/* Help & Resources */}
+          <div className="bg-card border border-border p-8 rounded-[2rem] space-y-5">
+            <h3 className="font-bold text-white text-lg flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-accent" />
+              Help & Resources
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <a
+                href="https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-zinc-900 hover:bg-zinc-800 border border-border rounded-2xl p-4 space-y-2 transition-colors group"
+              >
+                <div className="bg-accent/15 text-accent p-2 rounded-lg w-fit group-hover:scale-110 transition-transform">
+                  <PlayCircle className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-semibold text-white">Demo Video</p>
+                <p className="text-[11px] text-muted-foreground font-light leading-relaxed">
+                  Watch a guided walkthrough of payLoyal — connect, fund, stream, and dispute.
+                </p>
+              </a>
+
+              <a
+                href="https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-zinc-900 hover:bg-zinc-800 border border-border rounded-2xl p-4 space-y-2 transition-colors group"
+              >
+                <div className="bg-accent/15 text-accent p-2 rounded-lg w-fit group-hover:scale-110 transition-transform">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-semibold text-white">Documentation</p>
+                <p className="text-[11px] text-muted-foreground font-light leading-relaxed">
+                  Architecture, smart contracts, and setup guide for the full payLoyal protocol.
+                </p>
+              </a>
+
+              <a
+                href="https://stellar.org/developers"
+                target="_blank"
+                rel="noreferrer"
+                className="bg-zinc-900 hover:bg-zinc-800 border border-border rounded-2xl p-4 space-y-2 transition-colors group"
+              >
+                <div className="bg-accent/15 text-accent p-2 rounded-lg w-fit group-hover:scale-110 transition-transform">
+                  <Smartphone className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-semibold text-white">Stellar Developer Docs</p>
+                <p className="text-[11px] text-muted-foreground font-light leading-relaxed">
+                  Official Stellar and Soroban resources for contracts and wallet integrations.
+                </p>
+              </a>
             </div>
           </div>
 
