@@ -621,34 +621,23 @@ We onboarded 51 test users to interact with core wallet, streaming, dispute, and
   - **Most Liked:** Clean UI/UX (34 responses), fast wallet integration, the streaming concept, and the escrow + arbiter dispute resolution model.
   - **Top Improvement Requests (all now implemented):** loading spinners, friendly error messages, wallet auto-detection, onboarding guide/tooltips, notifications, navbar de-congestion + account dropdown, dark/light toggle + logo, fee transparency, confirm-email, QR code, multi-token selector, in-app feedback widget.
   - **Key User Feedback Points & Action Taken:**
-    1. *Vishvajit B. & Anjali P.*: Suggested adding loading skeletons/spinners when connecting rather than just disabling buttons.
-       - **Action Taken:** Updated connect buttons to display active spinners and connection text stages. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606))
-    2. *Bhavesh P.*: Noted that the app froze when waiting for wallet signatures.
-       - **Action Taken:** Created a connection stage state engine in `useWalletStore` cycling through `idle`, `detecting`, `waiting_signature`, and `verifying` with status labels.
-    3. *Sheetal G.*: Requested friendly error mapping instead of generic "Failed" messages.
-       - **Action Taken:** Implemented `getFriendlyErrorMessage` in `src/lib/error-mapper.ts` mapping wallet rejects, timeouts, and unfunded accounts to plain English.
-    4. *Sajid S.*: Recommended browser wallet detection and showing transaction processing states.
-       - **Action Taken:** Implemented browser checks for Freighter/Albedo/xBull and added dynamic spinner buttons for stream funding/pausing.
-    5. *Vaibhavi A. & Tanmay M.*: Suggested onboarding improvements to help users understand streams and wallet state.
-       - **Action Taken:** Added an Onboarding Checklist guide panel and a built-in Faucet (Friendbot) button to fund accounts in one click.
-    6. *Aditya J. & Jorge S.*: Reported that the navbar was too congested and asked for an account dropdown menu.
-       - **Action Taken:** Rebuilt the navigation into a compact layout with a dedicated **Account dropdown** (wallet address, balance, connect/disconnect, settings, logout) plus a new **Notification Center** bell.
-    7. *Rohit L. & Najmi M.*: Requested a notification feature and clearer alerts when streams start, pause, or disputes are raised.
-       - **Action Taken:** Added a persistent **Notification Center** with an unread badge that logs every on-chain event (created, funded, paused, resumed, withdrawn, disputed, resolved, rewards).
-    8. *Arya B.*: Asked for an app logo and a dark/light mode toggle.
-       - **Action Taken:** Added a branded payLoyal logo mark and a **Dark / Light theme toggle** with localStorage persistence.
-    9. *Shakera M., Iram S., Zeel C.*: Wanted helpful tooltips and an onboarding guide for first-time users.
-       - **Action Taken:** Added a dismissible **First-Time User Guide** banner on the dashboard and inline **tooltips** on key actions (Create Stream, Faucet).
-    10. *Tanishq S. & Purva P.*: Flagged transfer fees as expensive/unclear.
-        - **Action Taken:** Added a **fee transparency** panel in the stream creation form explaining the 100-stroop base fee and typical ~0.1 XLM transaction cost.
-    11. *Tanmay M.*: Suggested an email confirmation step at registration.
-        - **Action Taken:** Added a **Confirm Email** field to the registration form with client-side match validation alongside the existing Confirm Password check.
-    12. *Pritam M.*: Suggested QR code generation.
-        - **Action Taken:** Added a **wallet address QR code** modal (scannable, copy-to-clipboard) on the Settings page so users can easily share or fund their Stellar address.
-    13. *Jorge S. & Najmi M.*: Requested multi-token funding support.
-        - **Action Taken:** Replaced the raw token address field with an **Asset Selector** (XLM native preset, USDC, and custom token contract) that updates the amount label and stream display accordingly.
-    14. *Pritam M. & Amitabh D.*: Requested AI-powered feedback collection.
-        - **Action Taken:** Added an in-app **Feedback Widget** (star rating + comment) with a floating action button, so users can submit feedback directly from the dashboard instead of leaving the app.
+
+| # | Feedback (User) | Action Taken | Commit |
+|---|-----------------|--------------|--------|
+| 1 | Add loading skeletons/spinners when connecting instead of disabling buttons (*Vishvajit B. & Anjali P.*) | Updated connect buttons to display active spinners and connection text stages. | [`d145606`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606) |
+| 2 | App froze when waiting for wallet signatures (*Bhavesh P.*) | Created a connection stage state engine in `useWalletStore` cycling through `idle`, `detecting`, `waiting_signature`, and `verifying` with status labels. | [`d145606`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606) |
+| 3 | Friendly error messages instead of generic "Failed" (*Sheetal G.*) | Implemented `getFriendlyErrorMessage` in `src/lib/error-mapper.ts` mapping wallet rejects, timeouts, and unfunded accounts to plain English. | [`d145606`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606) |
+| 4 | Browser wallet detection and transaction processing states (*Sajid S.*) | Implemented browser checks for Freighter/Albedo/xBull and added dynamic spinner buttons for stream funding/pausing. | [`d145606`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606) |
+| 5 | Onboarding improvements to understand streams and wallet state (*Vaibhavi A. & Tanmay M.*) | Added an Onboarding Checklist guide panel and a built-in Faucet (Friendbot) button to fund accounts in one click. | [`d145606`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/d145606) |
+| 6 | Navbar too congested; requested an account dropdown menu (*Aditya J. & Jorge S.*) | Rebuilt the navigation into a compact layout with a dedicated **Account dropdown** (wallet address, balance, connect/disconnect, settings, logout) plus a new **Notification Center** bell. | [`569a3a5`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5) |
+| 7 | Add notifications / clearer alerts for stream events (*Rohit L. & Najmi M.*) | Added a persistent **Notification Center** with an unread badge that logs every on-chain event (created, funded, paused, resumed, withdrawn, disputed, resolved, rewards). | [`569a3a5`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5) |
+| 8 | Add an app logo and dark/light mode toggle (*Arya B.*) | Added a branded payLoyal logo mark and a **Dark / Light theme toggle** with localStorage persistence. | [`569a3a5`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5) |
+| 9 | Helpful tooltips and onboarding guide for first-time users (*Shakera M., Iram S., Zeel C.*) | Added a dismissible **First-Time User Guide** banner on the dashboard and inline **tooltips** on key actions (Create Stream, Faucet). | [`569a3a5`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5) |
+| 10 | Transfer fees expensive/unclear (*Tanishq S. & Purva P.*) | Added a **fee transparency** panel in the stream creation form explaining the 100-stroop base fee and typical ~0.1 XLM transaction cost. | [`569a3a5`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5) |
+| 11 | Add an email confirmation step at registration (*Tanmay M.*) | Added a **Confirm Email** field to the registration form with client-side match validation alongside the existing Confirm Password check. | [`e70021d`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d) |
+| 12 | Add QR code generation (*Pritam M.*) | Added a **wallet address QR code** modal (scannable, copy-to-clipboard) on the Settings page so users can easily share or fund their Stellar address. | [`e70021d`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d) |
+| 13 | Multi-token funding support (*Jorge S. & Najmi M.*) | Replaced the raw token address field with an **Asset Selector** (XLM native preset, USDC, and custom token contract) that updates the amount label and stream display accordingly. | [`e70021d`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d) |
+| 14 | AI-powered feedback collection (*Pritam M. & Amitabh D.*) | Added an in-app **Feedback Widget** (star rating + comment) with a floating action button, so users can submit feedback directly from the dashboard instead of leaving the app. | [`e70021d`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d) |
 - **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5)
 - **Second Iteration Commit (Level 5):** [feat: address remaining Level 5 user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d)
 
@@ -656,13 +645,15 @@ We onboarded 51 test users to interact with core wallet, streaming, dispute, and
 
 Beyond the feedback-driven UX iteration, this level ships substantial new product functionality to make payLoyal a complete payroll toolkit:
 
-1. **Team Address Book (`/team`)** — A dedicated page to save the Stellar addresses you work with most (contractors, employers, arbiters), each stored per user with full add/delete management. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
-2. **Stream Templates** — Save any create-stream configuration (title, contractor, amount, token, duration) as a named preset and re-apply it with one click, ideal for recurring monthly payroll. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
-3. **CSV Export** — One-click export of the entire transaction history from the Transaction Management Center to a dated CSV file for record-keeping and accounting. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
-4. **Mobile Wallet Guidance** — Detects touch/mobile devices and shows tailored wallet guidance with direct install links for Freighter/Lobstr mobile apps when no wallet extension is found. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
-5. **In-App Help & Resources** — A Help & Resources panel on the Settings page linking the demo video, project documentation, and official Stellar developer docs directly inside the app. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
-6. **Stream Lifecycle Analytics** — A live status-distribution panel on the Analytics page showing stream agreements across Active / Completed / Paused / Created / Disputed states. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
-7. **Mainnet Preview Indicator** — Clearer Public Mainnet readiness notice in the network switcher so users understand the testnet vs mainnet deployment boundary. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
+| # | Feature | Description | Commit |
+|---|---------|-------------|--------|
+| 1 | **Team Address Book (`/team`)** | Dedicated page to save the Stellar addresses you work with most (contractors, employers, arbiters), stored per user with full add/delete management. | [`4cf6ef0`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0) |
+| 2 | **Stream Templates** | Save any create-stream configuration (title, contractor, amount, token, duration) as a named preset and re-apply it with one click, ideal for recurring monthly payroll. | [`4cf6ef0`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0) |
+| 3 | **CSV Export** | One-click export of the entire transaction history from the Transaction Management Center to a dated CSV file for record-keeping and accounting. | [`4cf6ef0`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0) |
+| 4 | **Mobile Wallet Guidance** | Detects touch/mobile devices and shows tailored wallet guidance with direct install links for Freighter/Lobstr mobile apps when no wallet extension is found. | [`008e25f`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f) |
+| 5 | **In-App Help & Resources** | Help & Resources panel on the Settings page linking the demo video, project documentation, and official Stellar developer docs directly inside the app. | [`008e25f`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f) |
+| 6 | **Stream Lifecycle Analytics** | Live status-distribution panel on the Analytics page showing stream agreements across Active / Completed / Paused / Created / Disputed states. | [`008e25f`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f) |
+| 7 | **Mainnet Preview Indicator** | Clearer Public Mainnet readiness notice in the network switcher so users understand the testnet vs mainnet deployment boundary. | [`008e25f`](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f) |
 
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
