@@ -652,6 +652,14 @@ We onboarded 51 test users to interact with core wallet, streaming, dispute, and
 - **Iteration Commit (Level 5):** [feat: level 5 UX improvements from user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/569a3a5)
 - **Second Iteration Commit (Level 5):** [feat: address remaining Level 5 user feedback](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/e70021d)
 
+### 🆕 Level 5 New Features
+
+Beyond the feedback-driven UX iteration, this level ships substantial new product functionality to make payLoyal a complete payroll toolkit:
+
+1. **Team Address Book (`/team`)** — A dedicated page to save the Stellar addresses you work with most (contractors, employers, arbiters), each stored per user with full add/delete management. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
+2. **Stream Templates** — Save any create-stream configuration (title, contractor, amount, token, duration) as a named preset and re-apply it with one click, ideal for recurring monthly payroll. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
+3. **CSV Export** — One-click export of the entire transaction history from the Transaction Management Center to a dated CSV file for record-keeping and accounting. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
+
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
 - **Pitch Deck Link:** [payLoyal Level 5 Pitch Deck](https://docs.google.com/presentation/d/1XUOfCJmsc9BNI8bSIriRkvBfSRwXdnhn/edit?slide=id.p2#slide=id.p2)
