@@ -2,10 +2,30 @@
 
 import React from 'react';
 import { useTxStore, TransactionItem } from '../../store/useTxStore';
-import { History, CheckCircle2, Clock, XCircle, AlertCircle, RefreshCw, Trash2, ArrowUpRight } from 'lucide-react';
+import { History, CheckCircle2, Clock, XCircle, AlertCircle, RefreshCw, Trash2, ArrowUpRight, Download } from 'lucide-react';
 
 export default function TxCenter() {
   const { transactions, clearTransactions } = useTxStore();
+
+  const handleExportCSV = () => {
+    const header = ['ID', 'Title', 'Status', 'Timestamp', 'Hash', 'Error'];
+    const rows = transactions.map((tx) => [
+      tx.id,
+      `"${(tx.title || '').replace(/"/g, '""')}"`,
+      tx.status,
+      new Date(tx.timestamp).toISOString(),
+      tx.hash || '',
+      `"${(tx.error || '').replace(/"/g, '""')}"`,
+    ]);
+    const csv = [header.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `payloyal-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const getStatusIcon = (status: TransactionItem['status']) => {
     switch (status) {
@@ -57,13 +77,22 @@ export default function TxCenter() {
         </div>
         
         {transactions.length > 0 && (
-          <button
-            onClick={clearTransactions}
-            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>Clear History</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={clearTransactions}
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Clear History</span>
+            </button>
+          </div>
         )}
       </div>
 

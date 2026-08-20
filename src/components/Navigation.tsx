@@ -7,7 +7,7 @@ import { useWallet } from '../hooks/useWallet';
 import { useAuth } from '../hooks/useAuth';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
-import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield, RefreshCw, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { Menu, X, Wallet, Award, Activity, History, BarChart3, Settings as SettingsIcon, Shield, RefreshCw, LogOut, User as UserIcon, ChevronDown, Users } from 'lucide-react';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -32,6 +32,7 @@ export default function Navigation() {
     { name: 'Dispute Hub', href: '/disputes', icon: Shield },
     { name: 'Activity Feed', href: '/activity', icon: Activity },
     { name: 'Transaction Center', href: '/tx-center', icon: History },
+    { name: 'Team', href: '/team', icon: Users },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/settings', icon: SettingsIcon },
   ];

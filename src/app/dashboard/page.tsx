@@ -28,7 +28,8 @@ import {
   Award,
   RefreshCw,
   Zap,
-  Info
+  Info,
+  Bookmark
 } from 'lucide-react';
 import { StreamData } from '../../services/stellar';
 import { getAnalyticsSnapshot } from '../../lib/monitoring';
@@ -125,6 +126,46 @@ export default function Dashboard() {
 
   // Batch withdrawal state
   const [isWithdrawingAll, setIsWithdrawingAll] = useState(false);
+
+  // Stream Templates
+  const [templates, setTemplates] = useState<Array<{ id: string; name: string; title: string; contractor: string; amount: string; duration: string }>>([]);
+  const [templateName, setTemplateName] = useState('');
+  const [showTemplateInput, setShowTemplateInput] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const saved = localStorage.getItem(`payloyal_stream_templates_${user.id}`);
+      if (saved) {
+        try {
+          setTemplates(JSON.parse(saved));
+        } catch (e) {
+          console.warn('Failed to parse stream templates:', e);
+        }
+      }
+    }
+  }, [user?.id]);
+
+  const saveTemplate = () => {
+    if (!title || !contractor || !amount || !templateName) return;
+    const updated = [...templates, { id: `tpl-${Date.now()}`, name: templateName, title, contractor, amount, duration }];
+    setTemplates(updated);
+    localStorage.setItem(`payloyal_stream_templates_${user?.id}`, JSON.stringify(updated));
+    setTemplateName('');
+    setShowTemplateInput(false);
+  };
+
+  const applyTemplate = (tpl: { title: string; contractor: string; amount: string; duration: string }) => {
+    setTitle(tpl.title);
+    setContractor(tpl.contractor);
+    setAmount(tpl.amount);
+    setDuration(tpl.duration);
+  };
+
+  const deleteTemplate = (id: string) => {
+    const updated = templates.filter((t) => t.id !== id);
+    setTemplates(updated);
+    localStorage.setItem(`payloyal_stream_templates_${user?.id}`, JSON.stringify(updated));
+  };
 
   useEffect(() => {
     detectWallets();
@@ -669,6 +710,34 @@ export default function Dashboard() {
           </div>
 
           <form onSubmit={handleCreate} className="space-y-4">
+            {templates.length > 0 && (
+              <div className="space-y-2 animate-in fade-in">
+                <label className="text-xs text-muted-foreground font-semibold">Stream Templates</label>
+                <div className="space-y-1.5">
+                  {templates.map((tpl) => (
+                    <div key={tpl.id} className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => applyTemplate(tpl)}
+                        className="flex-1 text-left bg-zinc-950 border border-border hover:border-accent px-3 py-2 rounded-lg text-xs text-white transition-colors"
+                      >
+                        <span className="font-semibold">{tpl.name}</span>
+                        <span className="text-muted-foreground font-light"> — {tpl.title} · {tpl.amount} · {truncateAddress(tpl.contractor)}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteTemplate(tpl.id)}
+                        className="text-zinc-600 hover:text-red-400 transition-colors p-1"
+                        aria-label={`Delete template ${tpl.name}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-semibold">Stream Title</label>
               <input
@@ -835,20 +904,54 @@ export default function Dashboard() {
               </div>
             )}
 
-            <Tooltip content="Create a payroll agreement with a contractor. Requires wallet approval." side="top">
-              <button
-                type="submit"
-                disabled={isCreating}
-                className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
-              >
-                {isCreating ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                <span>{isCreating ? 'Creating Stream...' : 'Create Stream'}</span>
-              </button>
-            </Tooltip>
+            <div className="grid grid-cols-2 gap-2">
+              <Tooltip content="Save this stream configuration to reuse it later for recurring payroll." side="top">
+                <button
+                  type="button"
+                  disabled={!title || !contractor || !amount}
+                  onClick={() => setShowTemplateInput(!showTemplateInput)}
+                  className="w-full bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Bookmark className="h-4 w-4" />
+                  {showTemplateInput ? 'Cancel' : 'Save Template'}
+                </button>
+              </Tooltip>
+
+              <Tooltip content="Create a payroll agreement with a contractor. Requires wallet approval." side="top">
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-1.5"
+                >
+                  {isCreating ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  <span>{isCreating ? 'Creating Stream...' : 'Create Stream'}</span>
+                </button>
+              </Tooltip>
+            </div>
+
+            {showTemplateInput && (
+              <div className="space-y-1.5 animate-in fade-in">
+                <input
+                  type="text"
+                  placeholder="Template name (e.g. Monthly Frontend Pay)"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-border px-3 py-2 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-accent"
+                />
+                <button
+                  type="button"
+                  onClick={saveTemplate}
+                  disabled={!templateName}
+                  className="w-full bg-accent/15 hover:bg-accent/25 text-accent border border-accent/20 font-semibold py-2 rounded-lg text-xs transition-colors disabled:opacity-40"
+                >
+                  Confirm Save Template
+                </button>
+              </div>
+            )}
           </form>
         </div>
 
