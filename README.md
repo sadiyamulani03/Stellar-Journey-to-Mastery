@@ -659,6 +659,10 @@ Beyond the feedback-driven UX iteration, this level ships substantial new produc
 1. **Team Address Book (`/team`)** — A dedicated page to save the Stellar addresses you work with most (contractors, employers, arbiters), each stored per user with full add/delete management. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
 2. **Stream Templates** — Save any create-stream configuration (title, contractor, amount, token, duration) as a named preset and re-apply it with one click, ideal for recurring monthly payroll. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
 3. **CSV Export** — One-click export of the entire transaction history from the Transaction Management Center to a dated CSV file for record-keeping and accounting. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/4cf6ef0))
+4. **Mobile Wallet Guidance** — Detects touch/mobile devices and shows tailored wallet guidance with direct install links for Freighter/Lobstr mobile apps when no wallet extension is found. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
+5. **In-App Help & Resources** — A Help & Resources panel on the Settings page linking the demo video, project documentation, and official Stellar developer docs directly inside the app. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
+6. **Stream Lifecycle Analytics** — A live status-distribution panel on the Analytics page showing stream agreements across Active / Completed / Paused / Created / Disputed states. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
+7. **Mainnet Preview Indicator** — Clearer Public Mainnet readiness notice in the network switcher so users understand the testnet vs mainnet deployment boundary. ([commit](https://github.com/sadiyamulani03/Stellar-Journey-to-Mastery/commit/008e25f))
 
 ### 📁 Presentation & Demo Assets 
 - **Demo Video Link:** https://drive.google.com/file/d/1fn-VlZfCmAQ7Mpz55Zu7gdC8ohb799il/view?usp=sharing
